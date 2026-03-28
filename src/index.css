@@ -1,0 +1,197 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* HideNihon Design System — Japanese educational aesthetic */
+/* All colors MUST be HSL */
+
+@layer base {
+  :root {
+    /* Core palette — warm cream & deep ink */
+    --background: 40 30% 97%;
+    --foreground: 220 25% 12%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 220 25% 12%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 25% 12%;
+
+    /* Japanese red as primary */
+    --primary: 3 78% 44%;
+    --primary-foreground: 0 0% 100%;
+
+    /* Ink dark secondary */
+    --secondary: 220 25% 18%;
+    --secondary-foreground: 40 30% 97%;
+
+    --muted: 40 20% 92%;
+    --muted-foreground: 220 15% 50%;
+
+    --accent: 43 90% 55%;
+    --accent-foreground: 220 25% 12%;
+
+    --destructive: 3 78% 44%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 40 20% 88%;
+    --input: 40 20% 92%;
+    --ring: 3 78% 44%;
+
+    --radius: 1rem;
+
+    /* Custom HideNihon tokens */
+    --hiragana: 200 80% 42%;
+    --hiragana-bg: 200 80% 95%;
+    --katakana: 280 60% 45%;
+    --katakana-bg: 280 60% 95%;
+    --kanji: 15 85% 45%;
+    --kanji-bg: 15 85% 95%;
+
+    --success: 145 60% 40%;
+    --success-bg: 145 60% 95%;
+    --warning: 43 90% 55%;
+    --warning-bg: 43 90% 95%;
+    --error: 3 78% 44%;
+    --error-bg: 3 78% 95%;
+
+    --progress-track: 40 20% 88%;
+    --progress-fill: 3 78% 44%;
+
+    /* Font families */
+    --font-jp: 'M PLUS Rounded 1c', 'Noto Sans JP', sans-serif;
+    --font-ui: 'Inter', sans-serif;
+
+    /* Sidebar */
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-ui);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  .font-jp {
+    font-family: var(--font-jp);
+  }
+}
+
+@layer utilities {
+  /* Stroke animation for SVG paths */
+  .stroke-draw {
+    stroke-dashoffset: 0;
+    animation: draw-stroke 0.6s ease-in-out forwards;
+  }
+
+  /* Module color utilities */
+  .hiragana-gradient {
+    background: linear-gradient(135deg, hsl(var(--hiragana)), hsl(200 70% 58%));
+  }
+
+  .katakana-gradient {
+    background: linear-gradient(135deg, hsl(var(--katakana)), hsl(280 50% 60%));
+  }
+
+  .kanji-gradient {
+    background: linear-gradient(135deg, hsl(var(--kanji)), hsl(15 75% 58%));
+  }
+
+  /* Safe area for mobile */
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 16px);
+  }
+
+  /* Japanese character card */
+  .char-card {
+    @apply flex items-center justify-center rounded-2xl border-2 cursor-pointer select-none transition-all duration-150;
+    font-family: var(--font-jp);
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .char-card:active {
+    transform: scale(0.95);
+  }
+}
+
+@keyframes draw-stroke {
+  from {
+    stroke-dashoffset: 300;
+    opacity: 0;
+  }
+  to {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(6px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(4px); }
+}
+
+@keyframes pulse-correct {
+  0% { box-shadow: 0 0 0 0 hsl(145 60% 40% / 0.6); }
+  70% { box-shadow: 0 0 0 12px hsl(145 60% 40% / 0); }
+  100% { box-shadow: 0 0 0 0 hsl(145 60% 40% / 0); }
+}
+
+@keyframes timer-countdown {
+  from { stroke-dashoffset: 0; }
+  to { stroke-dashoffset: 283; }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.4s ease-out forwards;
+}
+
+.animate-scale-in {
+  animation: scale-in 0.3s ease-out forwards;
+}
+
+.animate-shake {
+  animation: shake 0.4s ease-in-out;
+}
+
+.animate-pulse-correct {
+  animation: pulse-correct 0.6s ease-out;
+}

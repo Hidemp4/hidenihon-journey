@@ -1,105 +1,121 @@
-import { Separator } from "@/components/ui/separator";
+import { useState, type FormEvent } from "react";
+import { Navigate, useNavigate } from "react-router-dom";
+import { ChevronLeft, LockKeyhole, ShieldCheck } from "lucide-react";
 import { useAuthContext } from "@/contexts/AuthContext";
-import { ChevronLeft } from "lucide-react";
-import React from "react";
-import { useNavigate } from "react-router-dom";
-import { t } from "./Theme";
-import { C } from "vitest/dist/chunks/reporters.d.BFLkQcL6.js";
+import { t, FONT_JP, FONT_SANS } from "./Theme";
 
 export default function Login() {
-    const navigate = useNavigate();
-    const { login } = useAuthContext();
+  const navigate = useNavigate();
+  const { token, login } = useAuthContext();
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [error, setError] = useState("");
 
-    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        login("fake-token-123");
-        navigate("/home")
+  if (token) return <Navigate to="/home" replace />;
+
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setError("");
+
+    const authenticated = login(name, email);
+    if (!authenticated) {
+      setError("Informe nome e e-mail para continuar.");
+      return;
     }
 
-    return (
-        <div className="w-full h-screen bg-[#ececec] p-6">
-            <div className="bg-white w-14 h-14 rounded-md flex justify-center items-center shadow-sm">
-                <ChevronLeft />
+    navigate("/home", { replace: true });
+  };
+
+  return (
+    <div
+      className="min-h-screen px-5 py-6"
+      style={{
+        background: "radial-gradient(circle at top right, rgba(223,37,49,0.18), transparent 32%), #f6f2ee",
+        fontFamily: FONT_SANS,
+      }}
+    >
+      <div className="mx-auto flex min-h-[calc(100vh-48px)] w-full max-w-md flex-col justify-between">
+        <button
+          type="button"
+          onClick={() => navigate("/")}
+          className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-sm transition active:scale-95"
+          aria-label="Voltar"
+        >
+          <ChevronLeft size={22} />
+        </button>
+
+        <div className="my-8">
+          <div className="mb-7 flex items-center gap-3">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl" style={{ background: t.accent }}>
+              <span style={{ fontFamily: FONT_JP }} className="text-3xl text-white">日</span>
             </div>
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.24em]" style={{ color: t.accent }}>HideNihon</p>
+              <h1 className="text-3xl font-bold tracking-tight text-black">Entrar na jornada</h1>
+            </div>
+          </div>
 
-            <form className="container mt-12 mb-6" onSubmit={handleSubmit}>
-
-                <div className="space-y-3">
-                    <h1 className="text-3xl font-semibold">Log In</h1>
-                    <p className="text-sm text-[#555] font-medium">Ao fazer login, você concorda com nossos
-                        <span className="text-black"> Termos de Uso</span>.
-                    </p>
-                </div>
-
-                <div className="space-y-5 mt-6">
-                    <div className="flex flex-col space-y-2">
-                        <label htmlFor="username" className="text-sm text-[#555] font-medium">
-                            E-mail:
-                            <span className="text-red-500">*</span>
-                        </label>
-                        <input type="text" id="username" name="username" placeholder="Digite seu e-mail" required
-                            className="rounded-xl p-3 border border-gray-300 placeholder:text-sm
-                            focus:px-6 focus:outline-none focus:ring-2 focus:ring-[#df2531] transition-all duration-200 autofill:shadow-[0_0_0_30px_#f9f9f9_inset]"
-                        />
-                    </div>
-
-                    <div className="flex flex-col space-y-2">
-                        <label htmlFor="password" className="text-sm text-[#555] font-medium">
-                            Password:
-                            <span className="text-red-500">*</span>
-                        </label>
-                        <input type="password" id="password" name="password" placeholder="Digite sua senha" required
-                            className="rounded-xl p-3 border border-gray-300 placeholder:text-sm
-                            focus:px-6 focus:outline-none focus:ring-2 focus:ring-[#df2531] transition-all duration-200 autofill:shadow-[0_0_0_30px_#f9f9f9_inset]"
-                        />
-                    </div>
-
-                    <p className="text-sm text-[#555] font-medium">
-                        Esqueceu a senha?
-                        <span className="text-black"> Recupere aqui</span>
-                    </p>
-
-                    <button type="submit"
-                        style={{background: t.accent}}
-                        className="text-white rounded-xl w-full py-3 font-medium
-                    hover:bg-[#c41f29] transition-colors duration-200">
-                        Log In
-                    </button>
-                </div>
-            </form >
-
-            <div className="flex items-center gap-3 mb-6">
-                <Separator style={{ background: t.accent45 }} className="flex-1" orientation="horizontal" />
-                <span className="SeparatorText">Ou</span>
-                <Separator style={{ background: t.accent45 }} className="flex-1" orientation="horizontal" />
+          <form onSubmit={handleSubmit} className="rounded-[28px] border border-black/5 bg-white p-5 shadow-xl shadow-black/5">
+            <div className="mb-5 rounded-2xl bg-black px-4 py-3 text-white">
+              <div className="mb-1 flex items-center gap-2 text-sm font-semibold">
+                <ShieldCheck size={17} />
+                Sessão local
+              </div>
+              <p className="text-xs text-white/70">
+                Seu progresso fica salvo neste navegador e as lições são liberadas gradualmente.
+              </p>
             </div>
 
             <div className="space-y-4">
-                <button style={{ border: `1px ${t.accent45} solid` }}
-                className="flex items-center justify-center gap-3 bg-white rounded-xl w-full py-3 text-sm font-medium hover:bg-[#f0f0f0] transition-colors duration-200">
-                    <svg className="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
-                        <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path>
-                        <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"></path><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"></path>
-                        <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-      4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"></path>
-                    </svg>
-                    Sign in with Google
-                </button>
+              <label className="block">
+                <span className="mb-2 block text-sm font-semibold text-black/70">Nome</span>
+                <input
+                  value={name}
+                  onChange={event => setName(event.target.value)}
+                  type="text"
+                  required
+                  autoComplete="name"
+                  className="w-full rounded-2xl border border-black/10 bg-[#fafafa] px-4 py-3 text-sm outline-none transition focus:border-[#df2531] focus:bg-white focus:ring-4 focus:ring-[#df2531]/10"
+                  placeholder="Seu nome"
+                />
+              </label>
 
-                <button style={{ border: `1px ${t.accent45} solid` }}
-                className="flex items-center justify-center gap-3 bg-white rounded-xl w-full py-3 text-sm font-medium
-                hover:bg-[#f0f0f0] transition-colors duration-200">
-                    <svg className="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
-                        <path fill="#1970dd" d="M24 5A19 19 0 1 0 24 43A19 19 0 1 0 24 5Z"></path>
-                        <path fill="#fff" d="M26.572,29.036h4.917l0.772-4.995h-5.69v-2.73c0-2.075,0.678-3.915,2.619-3.915h3.119v-4.359c-0.548-0.074-1.707-0.236-3.897-0.236c-4.573,0-7.254,2.415-7.254,7.917v3.323h-4.701v4.995h4.701v13.729C22.089,42.905,23.032,43,24,43c0.875,0,1.729-0.08,2.572-0.194V29.036z"></path>
-                    </svg>
-                    Sign in with Facebook
-                </button>
+              <label className="block">
+                <span className="mb-2 block text-sm font-semibold text-black/70">E-mail</span>
+                <input
+                  value={email}
+                  onChange={event => setEmail(event.target.value)}
+                  type="email"
+                  required
+                  autoComplete="email"
+                  className="w-full rounded-2xl border border-black/10 bg-[#fafafa] px-4 py-3 text-sm outline-none transition focus:border-[#df2531] focus:bg-white focus:ring-4 focus:ring-[#df2531]/10"
+                  placeholder="seu@email.com"
+                />
+              </label>
             </div>
 
-            <p className="text-sm text-center text-[#555] font-medium mt-8">
-                Não possui conta?
-                <span className="text-black"> Cadastre-se aqui</span>
-            </p>
-        </div >
-    );
+            {error && (
+              <p className="mt-4 rounded-2xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+                {error}
+              </p>
+            )}
+
+            <button
+              type="submit"
+              className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 text-sm font-bold text-white shadow-lg shadow-red-900/10 transition active:scale-[0.98]"
+              style={{ background: t.accent }}
+            >
+              <LockKeyhole size={17} />
+              Entrar
+            </button>
+          </form>
+
+        </div>
+
+        <p className="text-center text-xs font-medium text-black/45">
+          Esta é uma sessão local para estudo. Não use dados sensíveis aqui.
+        </p>
+      </div>
+    </div>
+  );
 }

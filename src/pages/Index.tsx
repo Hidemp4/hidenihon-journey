@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { MODULE_LIST } from "@/data/modules";
 import { useProgress, type ModuleProgress } from "@/hooks/useProgress";
+import { useAuthContext } from "@/contexts/AuthContext";
 import { t, FONT_SANS, FONT_JP } from "./Theme";
 import { SummaryCard } from "./SummaryCard";
 import { ModuleCard } from "./ModuleCard";
@@ -13,6 +14,7 @@ function countCompleted(lessons: ModuleProgress["lessons"]) {
 export default function Index() {
   const navigate = useNavigate();
   const { getModulePercent, progress } = useProgress();
+  const { user, logout } = useAuthContext();
 
   const totalLessons = Object.values(progress).reduce((s, mp) => s + countCompleted(mp.lessons), 0);
   const totalChars   = Object.values(progress).reduce((s, mp) => s + mp.learnedChars, 0);
@@ -49,6 +51,23 @@ export default function Index() {
             <p style={{ fontFamily: FONT_SANS, fontSize: 13, color: t.muted, margin: "3px 0 0" }}>
               de maneira simples e leve
             </p>
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginTop: 18, background: "rgba(255,255,255,0.72)", border: `1px solid ${t.border}`, borderRadius: 14, padding: "10px 12px" }}>
+            <div>
+              <p style={{ fontFamily: FONT_SANS, fontSize: 12, fontWeight: 700, color: t.secondary, margin: 0 }}>{user?.name}</p>
+              <p style={{ fontFamily: FONT_SANS, fontSize: 10, color: t.muted, margin: "2px 0 0", textTransform: "uppercase", letterSpacing: "0.12em" }}>Usuário local</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                logout();
+                navigate("/login", { replace: true });
+              }}
+              style={{ border: `1px solid ${t.border}`, background: t.primary, color: t.secondary, borderRadius: 999, padding: "7px 11px", fontSize: 11, fontWeight: 700 }}
+            >
+              Sair
+            </button>
           </div>
 
           {/* Stats */}

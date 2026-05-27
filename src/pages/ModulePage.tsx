@@ -222,13 +222,16 @@ export default function ModulePage() {
     stepColorVar,
     getScopedId,
     getDetails,
-  }: LessonListConfig) => (
-    <div className="px-4 py-5 flex flex-col gap-3 max-w-lg mx-auto">
-      <p className="text-xs text-muted-foreground">{summary}</p>
-      {groups.map((group, index) => {
+  }: LessonListConfig) => {
+    const lessonIds = groups.map(getScopedId);
+
+    return (
+      <div className="px-4 py-5 flex flex-col gap-3 max-w-lg mx-auto">
+        <p className="text-xs text-muted-foreground">{summary}</p>
+        {groups.map((group, index) => {
         const scopedId = getScopedId(group);
         const lessonProgress = getLessonProgress(moduleId, scopedId);
-        const unlocked = isLessonUnlocked(moduleId, index);
+        const unlocked = isLessonUnlocked(moduleId, index, lessonIds);
         const completed = lessonProgress?.completed ?? false;
         const score = lessonProgress?.score ?? 0;
 
@@ -249,9 +252,10 @@ export default function ModulePage() {
             }}
           />
         );
-      })}
-    </div>
-  );
+        })}
+      </div>
+    );
+  };
 
   if (moduleId === "kana") {
     const section = KANA_SECTIONS.find(s => s.id === activeSection) ?? KANA_SECTIONS[0];
@@ -260,7 +264,7 @@ export default function ModulePage() {
 
     return (
       <div className="min-h-screen" style={{ background: "hsl(var(--background))" }}>
-        <ModuleHeader moduleMeta={moduleMeta} color={moduleColor} onBack={() => navigate("/")}>
+        <ModuleHeader moduleMeta={moduleMeta} color={moduleColor} onBack={() => navigate("/home")}>
           <div className="flex gap-2">
             {KANA_SECTIONS.map(s => {
               const isActive = s.id === activeSection;
@@ -301,7 +305,7 @@ export default function ModulePage() {
 
     return (
       <div className="min-h-screen" style={{ background: "hsl(var(--background))" }}>
-        <ModuleHeader moduleMeta={moduleMeta} color={color} onBack={() => navigate("/")} />
+        <ModuleHeader moduleMeta={moduleMeta} color={color} onBack={() => navigate("/home")} />
         {renderLessonList({
           groups: practicaGroups,
           summary: `${practicaGroups.length} lições · ${allPratica.length} itens`,
@@ -317,7 +321,7 @@ export default function ModulePage() {
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: "hsl(var(--background))" }}>
-      <ModuleHeader moduleMeta={moduleMeta} color={moduleColor} onBack={() => navigate("/")} />
+      <ModuleHeader moduleMeta={moduleMeta} color={moduleColor} onBack={() => navigate("/home")} />
 
       <div className="flex-1 flex flex-col items-center justify-center gap-6 px-6 py-12 max-w-lg mx-auto w-full text-center">
         <div
@@ -359,7 +363,7 @@ export default function ModulePage() {
         </div>
 
         <button
-          onClick={() => navigate("/")}
+          onClick={() => navigate("/home")}
           className="w-full rounded-2xl py-3 font-semibold transition-all active:scale-95"
           style={{ background: "hsl(var(--muted))", color: "hsl(var(--foreground))" }}
         >

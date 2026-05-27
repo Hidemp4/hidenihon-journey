@@ -1,30 +1,44 @@
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useMemo, useState } from "react";
+import {
+    clearStoredSession,
+    createLocalSession,
+    getStoredSession,
+    type AuthSession,
+} from "@/lib/auth";
 
 interface AuthContextType {
     token: string | null;
-    login: (token: string) => void;
+    user: AuthSession["user"] | null;
+    login: (name: string, email: string) => boolean;
     logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);
 
 export const AuthProvider = ( {children} : { children: React.ReactNode }) => {
-    const [token, setToken] = useState<string | null>(
-        localStorage.getItem("token")
-    );
+    const [session, setSession] = useState<AuthSession | null>(() => getStoredSession());
 
-    const login = (token: string) => {
-        setToken(token);
-        localStorage.setItem("token", token);
+    const login = (name: string, email: string) => {
+        const nextSession = createLocalSession(name, email);
+        if (!nextSession) return false;
+        setSession(nextSession);
+        return true;
     };
 
     const logout = () => {
-        setToken(null);
-        localStorage.removeItem("token");
+        clearStoredSession();
+        setSession(null);
     };
 
+    const value = useMemo(() => ({
+        token: session?.token ?? null,
+        user: session?.user ?? null,
+        login,
+        logout,
+    }), [session]);
+
     return (
-        <AuthContext.Provider value={{token, login, logout}}>
+        <AuthContext.Provider value={value}>
             {children}
         </AuthContext.Provider>
     )

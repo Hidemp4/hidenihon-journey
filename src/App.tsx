@@ -7,6 +7,7 @@ import Index from "./pages/Index.tsx";
 import ModulePage from "./pages/ModulePage.tsx";
 import LessonPage from "./pages/LessonPage.tsx";
 import Login from "./pages/Login.tsx";
+import LandingPage from "./pages/LandingPage.tsx";
 import PrivateRoute from "./routes/PrivateRoute.tsx";
 
 const queryClient = new QueryClient();
@@ -16,16 +17,17 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter>
+      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <Routes>
+          <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/" element={<Navigate to="/login" replace />} />
 
           <Route element={<PrivateRoute />}>
             <Route path="/home" element={<Index />} />
             <Route path="/module/:module" element={<ModulePage />} />
             <Route path="/module/:module/lesson/:lessonId" element={<LessonPage />} />
           </Route>
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>

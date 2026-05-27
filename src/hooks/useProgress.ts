@@ -1,4 +1,5 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { useAuthContext } from "@/contexts/AuthContext";
 
 const MODULE_TYPES = ["kana", "japones-pratica", "numeros-familia", "numeros-particulas", "verbos-particulas"] as const;
 const STORAGE_KEY = "hidenihon_progress_v2";
@@ -27,25 +28,35 @@ const DEFAULT_PROGRESS = MODULE_TYPES.reduce((acc, module) => {
   return acc;
 }, {} as AllProgress);
 
-function loadProgress(): AllProgress {
+function getStorageKey(userId?: string) {
+  return userId ? `${STORAGE_KEY}:${userId}` : STORAGE_KEY;
+}
+
+function loadProgress(userId?: string): AllProgress {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(getStorageKey(userId));
     return raw ? { ...DEFAULT_PROGRESS, ...JSON.parse(raw) } : DEFAULT_PROGRESS;
   } catch {
     return DEFAULT_PROGRESS;
   }
 }
 
-function saveProgress(progress: AllProgress) {
+function saveProgress(progress: AllProgress, userId?: string) {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
+    localStorage.setItem(getStorageKey(userId), JSON.stringify(progress));
   } catch {
     return;
   }
 }
 
 export function useProgress() {
-  const [progress, setProgress] = useState<AllProgress>(loadProgress);
+  const { user } = useAuthContext();
+  const userId = user?.id;
+  const [progress, setProgress] = useState<AllProgress>(() => loadProgress(userId));
+
+  useEffect(() => {
+    setProgress(loadProgress(userId));
+  }, [userId]);
 
   const getModulePercent = useCallback((module: ModuleType): number => {
     const mod = progress[module];
@@ -83,14 +94,19 @@ export function useProgress() {
             },
           },
         };
-        saveProgress(next);
+        saveProgress(next, userId);
         return next;
       });
     },
-    []
+    [userId]
   );
 
-  const isLessonUnlocked = useCallback((_module: ModuleType, _lessonIndex: number): boolean => true, []);
+  const isLessonUnlocked = useCallback((module: ModuleType, lessonIndex: number, lessonIds: string[] = []): boolean => {
+    if (lessonIndex === 0) return true;
+    const previousLessonId = lessonIds[lessonIndex - 1];
+    if (!previousLessonId) return false;
+    return progress[module]?.lessons[previousLessonId]?.completed ?? false;
+  }, [progress]);
 
   const getErrorChars = useCallback((module: ModuleType): string[] => {
     const mod = progress[module];
@@ -104,9 +120,9 @@ export function useProgress() {
   }, [progress]);
 
   const resetProgress = useCallback(() => {
-    saveProgress(DEFAULT_PROGRESS);
+    saveProgress(DEFAULT_PROGRESS, userId);
     setProgress(DEFAULT_PROGRESS);
-  }, []);
+  }, [userId]);
 
   return {
     progress,

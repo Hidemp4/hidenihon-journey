@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { hiraganaGroups, allHiragana } from "@/data/hiragana";
@@ -64,11 +64,14 @@ function ResultCard({ label, score, colorVar }: ResultCardProps) {
 export default function LessonPage() {
   const { module, lessonId } = useParams<{ module: string; lessonId: string }>();
   const navigate = useNavigate();
-  const { completeLesson } = useProgress();
+  const { completeLesson, isLessonUnlocked } = useProgress();
 
   const [sectionId, groupId] = (lessonId ?? "").split("__");
   const sectionData = SECTION_DATA[sectionId as keyof typeof SECTION_DATA];
   const group = sectionData?.groups.find(g => g.id === groupId);
+  const groupIndex = sectionData?.groups.findIndex(g => g.id === groupId) ?? -1;
+  const lessonIds = sectionData?.groups.map(g => `${sectionId}__${g.id}`) ?? [];
+  const unlocked = module && groupIndex >= 0 ? isLessonUnlocked(module as ModuleType, groupIndex, lessonIds) : false;
 
   const [step, setStep] = useState<Step>("intro");
   const [idScore, setIdScore] = useState(0);
@@ -103,7 +106,11 @@ export default function LessonPage() {
     [idScore, idErrors, module, lessonId, group, completeLesson]
   );
 
-  if (!module || !lessonId || !group || !sectionData) return null;
+  useEffect(() => {
+    if (module && lessonId && group && !unlocked) navigate(`/module/${module}`, { replace: true });
+  }, [module, lessonId, group, unlocked, navigate]);
+
+  if (!module || !lessonId || !group || !sectionData || !unlocked) return null;
 
   const stepIndex = STEPS.indexOf(step);
   const color = sectionData.colorVar;
@@ -217,7 +224,7 @@ export default function LessonPage() {
                 Ver próximas lições
               </button>
               <button
-                onClick={() => navigate("/")}
+                onClick={() => navigate("/home")}
                 className="w-full rounded-2xl py-3 text-sm font-medium transition-all active:scale-95"
                 style={{ background: "hsl(var(--muted))", color: "hsl(var(--foreground))" }}
               >

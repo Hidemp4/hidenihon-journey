@@ -7,19 +7,23 @@ import { t, FONT_JP, FONT_SANS } from "./Theme";
 export default function Login() {
   const navigate = useNavigate();
   const { token, login } = useAuthContext();
-  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (token) return <Navigate to="/home" replace />;
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError("");
+    setIsSubmitting(true);
 
-    const authenticated = login(name, email);
+    const authenticated = await login(email, password);
+    setIsSubmitting(false);
+
     if (!authenticated) {
-      setError("Informe nome e e-mail para continuar.");
+      setError("E-mail ou senha inválidos. Verifique os dados e tente novamente.");
       return;
     }
 
@@ -59,27 +63,14 @@ export default function Login() {
             <div className="mb-5 rounded-2xl bg-black px-4 py-3 text-white">
               <div className="mb-1 flex items-center gap-2 text-sm font-semibold">
                 <ShieldCheck size={17} />
-                Sessão local
+                Login local
               </div>
               <p className="text-xs text-white/70">
-                Seu progresso fica salvo neste navegador e as lições são liberadas gradualmente.
+                Use as credenciais configuradas para acessar seu progresso neste navegador.
               </p>
             </div>
 
             <div className="space-y-4">
-              <label className="block">
-                <span className="mb-2 block text-sm font-semibold text-black/70">Nome</span>
-                <input
-                  value={name}
-                  onChange={event => setName(event.target.value)}
-                  type="text"
-                  required
-                  autoComplete="name"
-                  className="w-full rounded-2xl border border-black/10 bg-[#fafafa] px-4 py-3 text-sm outline-none transition focus:border-[#df2531] focus:bg-white focus:ring-4 focus:ring-[#df2531]/10"
-                  placeholder="Seu nome"
-                />
-              </label>
-
               <label className="block">
                 <span className="mb-2 block text-sm font-semibold text-black/70">E-mail</span>
                 <input
@@ -92,6 +83,19 @@ export default function Login() {
                   placeholder="seu@email.com"
                 />
               </label>
+
+              <label className="block">
+                <span className="mb-2 block text-sm font-semibold text-black/70">Senha</span>
+                <input
+                  value={password}
+                  onChange={event => setPassword(event.target.value)}
+                  type="password"
+                  required
+                  autoComplete="current-password"
+                  className="w-full rounded-2xl border border-black/10 bg-[#fafafa] px-4 py-3 text-sm outline-none transition focus:border-[#df2531] focus:bg-white focus:ring-4 focus:ring-[#df2531]/10"
+                  placeholder="Digite sua senha"
+                />
+              </label>
             </div>
 
             {error && (
@@ -102,18 +106,19 @@ export default function Login() {
 
             <button
               type="submit"
+              disabled={isSubmitting}
               className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 text-sm font-bold text-white shadow-lg shadow-red-900/10 transition active:scale-[0.98]"
               style={{ background: t.accent }}
             >
               <LockKeyhole size={17} />
-              Entrar
+              {isSubmitting ? "Entrando..." : "Entrar"}
             </button>
           </form>
 
         </div>
 
         <p className="text-center text-xs font-medium text-black/45">
-          Esta é uma sessão local para estudo. Não use dados sensíveis aqui.
+          Esta autenticação é local para estudo. Não use uma senha real ou sensível aqui.
         </p>
       </div>
     </div>

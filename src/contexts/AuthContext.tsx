@@ -1,15 +1,15 @@
-import React, { createContext, useContext, useMemo, useState } from "react";
+import React, { createContext, useCallback, useContext, useMemo, useState } from "react";
 import {
     clearStoredSession,
-    createLocalSession,
     getStoredSession,
+    loginWithLocalPassword,
     type AuthSession,
 } from "@/lib/auth";
 
 interface AuthContextType {
     token: string | null;
     user: AuthSession["user"] | null;
-    login: (name: string, email: string) => boolean;
+    login: (email: string, password: string) => Promise<boolean>;
     logout: () => void;
 }
 
@@ -18,12 +18,12 @@ const AuthContext = createContext<AuthContextType>({} as AuthContextType);
 export const AuthProvider = ( {children} : { children: React.ReactNode }) => {
     const [session, setSession] = useState<AuthSession | null>(() => getStoredSession());
 
-    const login = (name: string, email: string) => {
-        const nextSession = createLocalSession(name, email);
+    const login = useCallback(async (email: string, password: string) => {
+        const nextSession = await loginWithLocalPassword(email, password);
         if (!nextSession) return false;
         setSession(nextSession);
         return true;
-    };
+    }, []);
 
     const logout = () => {
         clearStoredSession();
@@ -35,7 +35,7 @@ export const AuthProvider = ( {children} : { children: React.ReactNode }) => {
         user: session?.user ?? null,
         login,
         logout,
-    }), [session]);
+    }), [login, session]);
 
     return (
         <AuthContext.Provider value={value}>

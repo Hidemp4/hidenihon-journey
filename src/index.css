@@ -25,8 +25,8 @@
     --secondary: 220 25% 18%;
     --secondary-foreground: 40 30% 97%;
 
-    --muted: 40 20% 92%;
-    --muted-foreground: 220 15% 50%;
+    --muted: 40 22% 90%;
+    --muted-foreground: 220 18% 34%;
 
     --accent: 43 90% 55%;
     --accent-foreground: 220 25% 12%;
@@ -34,28 +34,28 @@
     --destructive: 3 78% 44%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 40 20% 88%;
+    --border: 36 18% 82%;
     --input: 40 20% 92%;
     --ring: 3 78% 44%;
 
     --radius: 1rem;
 
     /* Custom HideNihon tokens */
-    --hiragana: 200 80% 42%;
-    --hiragana-bg: 200 80% 95%;
-    --katakana: 280 60% 45%;
-    --katakana-bg: 280 60% 95%;
-    --kanji: 15 85% 45%;
-    --kanji-bg: 15 85% 95%;
+    --hiragana: 200 85% 32%;
+    --hiragana-bg: 200 62% 90%;
+    --katakana: 280 62% 34%;
+    --katakana-bg: 280 46% 90%;
+    --kanji: 12 78% 36%;
+    --kanji-bg: 15 62% 90%;
 
-    --success: 145 60% 40%;
-    --success-bg: 145 60% 95%;
-    --warning: 43 90% 55%;
-    --warning-bg: 43 90% 95%;
+    --success: 145 64% 30%;
+    --success-bg: 145 46% 90%;
+    --warning: 37 92% 38%;
+    --warning-bg: 43 70% 90%;
     --error: 3 78% 44%;
     --error-bg: 3 78% 95%;
 
-    --progress-track: 40 20% 88%;
+    --progress-track: 36 18% 82%;
     --progress-fill: 3 78% 44%;
 
     /* Font families */

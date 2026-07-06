@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useState } from "react";
-import { useAuthContext } from "@/contexts/AuthContext";
+import { createContext, createElement, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
+import { useAuthContext } from "@/contexts/auth-context-core";
+import { loadUserProgress, saveUserProgress } from "@/lib/progressDb";
 
 const MODULE_TYPES = ["kana", "japones-pratica", "numeros-familia", "numeros-particulas", "verbos-particulas"] as const;
-const STORAGE_KEY = "hidenihon_progress_v2";
 
 export type ModuleType = (typeof MODULE_TYPES)[number];
 
@@ -21,41 +21,56 @@ export interface ModuleProgress {
   learnedChars: number;
 }
 
-type AllProgress = Record<ModuleType, ModuleProgress>;
+export type AllProgress = Record<ModuleType, ModuleProgress>;
 
 const DEFAULT_PROGRESS = MODULE_TYPES.reduce((acc, module) => {
   acc[module] = { module, lessons: {}, totalChars: module === "kana" ? 107 : 0, learnedChars: 0 };
   return acc;
 }, {} as AllProgress);
 
-function getStorageKey(userId?: string) {
-  return userId ? `${STORAGE_KEY}:${userId}` : STORAGE_KEY;
+function createDefaultProgress(): AllProgress {
+  return structuredClone(DEFAULT_PROGRESS);
 }
 
-function loadProgress(userId?: string): AllProgress {
-  try {
-    const raw = localStorage.getItem(getStorageKey(userId));
-    return raw ? { ...DEFAULT_PROGRESS, ...JSON.parse(raw) } : DEFAULT_PROGRESS;
-  } catch {
-    return DEFAULT_PROGRESS;
-  }
+function normalizeProgress(progress: AllProgress | null): AllProgress {
+  return progress ? { ...createDefaultProgress(), ...progress } : createDefaultProgress();
 }
 
-function saveProgress(progress: AllProgress, userId?: string) {
-  try {
-    localStorage.setItem(getStorageKey(userId), JSON.stringify(progress));
-  } catch {
-    return;
-  }
-}
+type ProgressContextValue = ReturnType<typeof useProgressState>;
 
-export function useProgress() {
+const ProgressContext = createContext<ProgressContextValue | null>(null);
+
+function useProgressState() {
   const { user } = useAuthContext();
   const userId = user?.id;
-  const [progress, setProgress] = useState<AllProgress>(() => loadProgress(userId));
+  const [progress, setProgress] = useState<AllProgress>(() => createDefaultProgress());
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    setProgress(loadProgress(userId));
+    let active = true;
+
+    if (!userId) {
+      setProgress(createDefaultProgress());
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+    loadUserProgress(userId)
+      .then((storedProgress) => {
+        if (active) setProgress(normalizeProgress(storedProgress));
+      })
+      .catch((loadError) => {
+        if (active) setError(loadError instanceof Error ? loadError.message : "Erro ao carregar progresso.");
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
   }, [userId]);
 
   const getModulePercent = useCallback((module: ModuleType): number => {
@@ -94,7 +109,11 @@ export function useProgress() {
             },
           },
         };
-        saveProgress(next, userId);
+        if (userId) {
+          saveUserProgress(userId, next).catch((saveError) => {
+            setError(saveError instanceof Error ? saveError.message : "Erro ao salvar progresso.");
+          });
+        }
         return next;
       });
     },
@@ -102,6 +121,7 @@ export function useProgress() {
   );
 
   const isLessonUnlocked = useCallback((module: ModuleType, lessonIndex: number, lessonIds: string[] = []): boolean => {
+    if (module === "kana") return true;
     if (lessonIndex === 0) return true;
     const previousLessonId = lessonIds[lessonIndex - 1];
     if (!previousLessonId) return false;
@@ -120,12 +140,19 @@ export function useProgress() {
   }, [progress]);
 
   const resetProgress = useCallback(() => {
-    saveProgress(DEFAULT_PROGRESS, userId);
-    setProgress(DEFAULT_PROGRESS);
+    const next = createDefaultProgress();
+    setProgress(next);
+    if (userId) {
+      saveUserProgress(userId, next).catch((saveError) => {
+        setError(saveError instanceof Error ? saveError.message : "Erro ao resetar progresso.");
+      });
+    }
   }, [userId]);
 
   return {
     progress,
+    loading,
+    error,
     getModulePercent,
     getLessonProgress,
     completeLesson,
@@ -133,4 +160,16 @@ export function useProgress() {
     getErrorChars,
     resetProgress,
   };
+}
+
+export function ProgressProvider({ children }: { children: ReactNode }) {
+  const value = useProgressState();
+
+  return createElement(ProgressContext.Provider, { value }, children);
+}
+
+export function useProgress() {
+  const value = useContext(ProgressContext);
+  if (!value) throw new Error("useProgress deve ser usado dentro de ProgressProvider.");
+  return value;
 }

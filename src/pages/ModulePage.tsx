@@ -70,6 +70,8 @@ const LESSON_STEPS: Array<{ id: LessonStep; label: string; Icon: LucideIcon }> =
   { id: "reading", label: "Leitura", Icon: BookMarked },
 ];
 
+const hslVar = (name: string, alpha?: number) => `hsl(var(${name})${alpha === undefined ? "" : ` / ${alpha}`})`;
+
 type ModuleHeaderProps = {
   moduleMeta: ModuleMeta;
   color: string;
@@ -109,8 +111,8 @@ function ModuleHeader({ moduleMeta, color, onBack, children }: ModuleHeaderProps
       <div className={`flex items-center gap-3 ${children ? "mb-3" : ""}`}>
         <button
           onClick={onBack}
-          className="rounded-xl p-2 transition-all active:scale-95"
-          style={{ background: "hsl(var(--muted))" }}
+          className="rounded-xl border p-2 transition-all active:scale-95"
+          style={{ background: "hsl(var(--card))", borderColor: "hsl(var(--border))" }}
         >
           <ArrowLeft size={20} />
         </button>
@@ -145,9 +147,9 @@ function LessonCard({
     <button
       onClick={onOpen}
       disabled={!unlocked}
-      className="w-full rounded-2xl border p-4 text-left transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+      className="w-full rounded-2xl border p-4 text-left shadow-sm transition-all active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
       style={{
-        background: completed ? bg : "hsl(var(--card))",
+        background: completed ? `linear-gradient(135deg, ${bg}, hsl(var(--card)))` : "hsl(var(--card))",
         borderColor: completed ? color : "hsl(var(--border))",
       }}
     >
@@ -158,6 +160,7 @@ function LessonCard({
             style={{
               background: completed ? color : unlocked ? bg : "hsl(var(--muted))",
               color: completed ? "white" : unlocked ? color : "hsl(var(--muted-foreground))",
+              border: unlocked && !completed ? `1px solid ${color}` : "1px solid transparent",
             }}
           >
             {completed ? <CheckCircle2 size={18} /> : unlocked ? lessonIndex + 1 : <Lock size={16} />}
@@ -188,8 +191,9 @@ function LessonCard({
               key={id}
               className="flex items-center gap-1 rounded-lg px-2 py-1 text-xs"
               style={{
-                background: completed ? `hsl(${stepColorVar} / 0.12)` : "hsl(var(--muted))",
-                color: completed ? color : "hsl(var(--muted-foreground))",
+                background: completed ? hslVar(stepColorVar, 0.16) : "hsl(var(--muted))",
+                color: completed ? color : "hsl(var(--foreground))",
+                border: completed ? `1px solid ${hslVar(stepColorVar, 0.28)}` : "1px solid hsl(var(--border))",
               }}
             >
               <Icon size={16} />
@@ -212,7 +216,7 @@ export default function ModulePage() {
   if (!moduleMeta) return null;
 
   const moduleId = moduleMeta.id as ModuleType;
-  const moduleColor = `hsl(${moduleMeta.colorVar})`;
+  const moduleColor = hslVar(moduleMeta.colorVar);
 
   const renderLessonList = ({
     groups,
@@ -227,7 +231,7 @@ export default function ModulePage() {
 
     return (
       <div className="px-4 py-5 flex flex-col gap-3 max-w-lg mx-auto">
-        <p className="text-xs text-muted-foreground">{summary}</p>
+        <p className="text-xs font-medium text-muted-foreground">{summary}</p>
         {groups.map((group, index) => {
         const scopedId = getScopedId(group);
         const lessonProgress = getLessonProgress(moduleId, scopedId);
@@ -259,23 +263,25 @@ export default function ModulePage() {
 
   if (moduleId === "kana") {
     const section = KANA_SECTIONS.find(s => s.id === activeSection) ?? KANA_SECTIONS[0];
-    const color = `hsl(${section.colorVar})`;
-    const bg = `hsl(${section.bgVar})`;
+    const color = hslVar(section.colorVar);
+    const bg = hslVar(section.bgVar);
 
     return (
       <div className="min-h-screen" style={{ background: "hsl(var(--background))" }}>
         <ModuleHeader moduleMeta={moduleMeta} color={moduleColor} onBack={() => navigate("/home")}>
-          <div className="flex gap-2">
+          <div className="flex gap-2 rounded-2xl border bg-card p-1 shadow-sm" style={{ borderColor: "hsl(var(--border))" }}>
             {KANA_SECTIONS.map(s => {
               const isActive = s.id === activeSection;
               return (
                 <button
                   key={s.id}
                   onClick={() => setActiveSection(s.id)}
-                  className="flex-1 rounded-xl py-2 text-sm font-semibold transition-all"
+                  className="flex-1 rounded-xl border py-2 text-sm font-bold transition-all active:scale-95"
                   style={{
-                    background: isActive ? `hsl(${s.colorVar})` : "hsl(var(--muted))",
-                    color: isActive ? "white" : "hsl(var(--muted-foreground))",
+                    background: isActive ? hslVar(s.colorVar) : "hsl(var(--muted))",
+                    borderColor: isActive ? hslVar(s.colorVar) : "hsl(var(--border))",
+                    color: isActive ? "hsl(var(--primary-foreground))" : "hsl(var(--foreground))",
+                    boxShadow: isActive ? `0 8px 18px ${hslVar(s.colorVar, 0.22)}` : "none",
                   }}
                 >
                   <span className="font-jp mr-1">{s.emoji}</span>
@@ -301,7 +307,7 @@ export default function ModulePage() {
 
   if (moduleId === "japones-pratica") {
     const color = moduleColor;
-    const bg = `hsl(${moduleMeta.bgVar})`;
+    const bg = hslVar(moduleMeta.bgVar);
 
     return (
       <div className="min-h-screen" style={{ background: "hsl(var(--background))" }}>
@@ -326,7 +332,7 @@ export default function ModulePage() {
       <div className="flex-1 flex flex-col items-center justify-center gap-6 px-6 py-12 max-w-lg mx-auto w-full text-center">
         <div
           className="w-24 h-24 rounded-full flex items-center justify-center text-4xl font-jp"
-          style={{ background: `hsl(${moduleMeta.bgVar})`, color: `hsl(${moduleMeta.colorVar})` }}
+          style={{ background: hslVar(moduleMeta.bgVar), color: hslVar(moduleMeta.colorVar) }}
         >
           {moduleMeta.emoji}
         </div>
@@ -342,7 +348,7 @@ export default function ModulePage() {
               <div key={t} className="flex items-center gap-3">
                 <div
                   className="w-6 h-6 rounded-lg flex items-center justify-center text-xs font-bold"
-                  style={{ background: `hsl(${moduleMeta.bgVar})`, color: `hsl(${moduleMeta.colorVar})` }}
+                  style={{ background: hslVar(moduleMeta.bgVar), color: hslVar(moduleMeta.colorVar) }}
                 >
                   {i + 1}
                 </div>

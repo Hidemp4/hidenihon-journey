@@ -38,7 +38,7 @@ export function ModuleCard({ module, index, percent, completedLessons, isLocked,
         overflow: "hidden",
         background: t.primary,
         border: `1px solid ${t.border}`,
-        opacity: isLocked ? 0.45 : 1,
+        opacity: isLocked ? 0.62 : 1,
         cursor: isLocked ? "default" : "pointer",
         padding: 0,
       }}
@@ -52,7 +52,7 @@ export function ModuleCard({ module, index, percent, completedLessons, isLocked,
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <div style={{
               width: 44, height: 44, borderRadius: 12,
-              background: isLocked ? t.surface : t.accent45,
+              background: isLocked ? t.surface : "rgba(223,37,49,0.18)",
               display: "flex", alignItems: "center", justifyContent: "center",
               fontSize: 22, flexShrink: 0,
             }}>
@@ -76,7 +76,7 @@ export function ModuleCard({ module, index, percent, completedLessons, isLocked,
             </div>
           </div>
 
-          <span style={{ fontFamily: FONT_SANS, fontSize: 11, color: t.muted }}>
+          <span style={{ fontFamily: FONT_SANS, fontSize: 11, fontWeight: 600, color: t.muted }}>
             {completedLessons} lições
           </span>
         </div>
@@ -86,12 +86,12 @@ export function ModuleCard({ module, index, percent, completedLessons, isLocked,
         {/* Topic pills */}
         <div style={{ display: "flex", flexWrap: "wrap" as const, gap: 6, marginTop: 10 }}>
           {module.topics.slice(0, 4).map((topic) => (
-            <span key={topic} style={{ fontFamily: FONT_SANS, fontSize: 10, fontWeight: 500, background: t.surface, color: t.muted, padding: "2px 8px", borderRadius: 99 }}>
+            <span key={topic} style={{ fontFamily: FONT_SANS, fontSize: 10, fontWeight: 600, background: t.surface, color: t.muted, padding: "2px 8px", borderRadius: 99, border: `1px solid ${t.border}` }}>
               {topic}
             </span>
           ))}
           {module.topics.length > 4 && (
-            <span style={{ fontFamily: FONT_SANS, fontSize: 10, background: t.surface, color: t.muted, padding: "2px 8px", borderRadius: 99 }}>
+            <span style={{ fontFamily: FONT_SANS, fontSize: 10, fontWeight: 600, background: t.surface, color: t.muted, padding: "2px 8px", borderRadius: 99, border: `1px solid ${t.border}` }}>
               +{module.topics.length - 4}
             </span>
           )}

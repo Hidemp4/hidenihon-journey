@@ -29,6 +29,8 @@ const STEP_LABELS: Record<Step, string> = {
   done: "Concluído",
 };
 
+const hslVar = (name: string, alpha?: number) => `hsl(var(${name})${alpha === undefined ? "" : ` / ${alpha}`})`;
+
 type ExerciseHeaderProps = {
   title: string;
   description: string;
@@ -55,7 +57,7 @@ function ResultCard({ label, score, colorVar }: ResultCardProps) {
       className="rounded-2xl p-4 text-center border"
       style={{ background: "hsl(var(--card))", borderColor: "hsl(var(--border))" }}
     >
-      <p className="text-2xl font-bold" style={{ color: `hsl(${colorVar})` }}>{score}%</p>
+      <p className="text-2xl font-bold" style={{ color: hslVar(colorVar) }}>{score}%</p>
       <p className="text-xs text-muted-foreground mt-1">{label}</p>
     </div>
   );
@@ -143,16 +145,16 @@ export default function LessonPage() {
                 style={{
                   background:
                     i < stepIndex
-                      ? `hsl(${color})`
+                      ? hslVar(color)
                       : i === stepIndex
-                      ? `hsl(${color} / 0.5)`
+                      ? hslVar(color, 0.5)
                       : "hsl(var(--border))",
                 }}
               />
               <p
                 className="text-[10px] text-center font-medium"
                 style={{
-                  color: i <= stepIndex ? `hsl(${color})` : "hsl(var(--muted-foreground))",
+                  color: i <= stepIndex ? hslVar(color) : "hsl(var(--muted-foreground))",
                 }}
               >
                 {STEP_LABELS[lessonStep]}
@@ -195,7 +197,7 @@ export default function LessonPage() {
           <div className="flex flex-col items-center gap-6 px-4 py-8 animate-scale-in">
             <div
               className="w-24 h-24 rounded-full flex items-center justify-center text-5xl"
-              style={{ background: `hsl(${color} / 0.15)` }}
+              style={{ background: hslVar(color, 0.15) }}
             >
               🏆
             </div>
@@ -216,9 +218,9 @@ export default function LessonPage() {
                 onClick={() => navigate(`/module/${module}`)}
                 className="w-full rounded-2xl py-4 text-base font-bold transition-all active:scale-95"
                 style={{
-                  background: `hsl(${color})`,
+                  background: hslVar(color),
                   color: "white",
-                  boxShadow: `0 4px 20px hsl(${color} / 0.35)`,
+                  boxShadow: `0 4px 20px ${hslVar(color, 0.35)}`,
                 }}
               >
                 Ver próximas lições

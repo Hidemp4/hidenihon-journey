@@ -35,7 +35,7 @@ export default function LandingPage() {
               <p className="text-lg font-bold tracking-tight">
                 Hide<span style={{ color: t.accent }}>Nihon</span>
               </p>
-              <p className="text-xs tracking-[0.18em] text-black/45" style={{ fontFamily: FONT_JP }}>日本語学習</p>
+              <p className="text-xs font-semibold tracking-[0.18em] text-black/60" style={{ fontFamily: FONT_JP }}>日本語学習</p>
             </div>
           </Link>
 
@@ -49,7 +49,7 @@ export default function LandingPage() {
 
         <section className="grid flex-1 items-center gap-10 py-12 lg:grid-cols-[1.02fr_0.98fr] lg:py-16">
           <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45 }}>
-            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-black/10 bg-white/70 px-3 py-2 text-xs font-bold uppercase tracking-[0.18em] text-black/55 shadow-sm backdrop-blur">
+            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-black/15 bg-white/85 px-3 py-2 text-xs font-bold uppercase tracking-[0.18em] text-black/70 shadow-sm backdrop-blur">
               <Sparkles size={14} style={{ color: t.accent }} />
               Japonês sem sobrecarga
             </div>
@@ -58,7 +58,7 @@ export default function LandingPage() {
               Aprenda japonês em uma jornada visual, simples e progressiva.
             </h1>
 
-            <p className="mt-6 max-w-2xl text-base leading-7 text-black/60 sm:text-lg">
+            <p className="mt-6 max-w-2xl text-base leading-7 text-black/70 sm:text-lg">
               O HideNihon organiza seus primeiros passos no japonês com módulos curtos,
               desbloqueio por progresso e uma experiência feita para estudar todos os dias.
             </p>
@@ -86,7 +86,7 @@ export default function LandingPage() {
                 <div key={feature.label} className="rounded-3xl border border-black/10 bg-white/72 p-4 shadow-sm backdrop-blur">
                   <CheckCircle2 size={18} style={{ color: t.accent }} />
                   <h2 className="mt-3 text-sm font-black">{feature.label}</h2>
-                  <p className="mt-1 text-xs leading-5 text-black/50">{feature.description}</p>
+                  <p className="mt-1 text-xs font-medium leading-5 text-black/65">{feature.description}</p>
                 </div>
               ))}
             </div>
@@ -105,7 +105,7 @@ export default function LandingPage() {
               <div className="rounded-[28px] bg-black p-5 text-white">
                 <div className="flex items-center justify-between gap-4">
                   <div>
-                    <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/45">Preview da jornada</p>
+                    <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/65">Preview da jornada</p>
                     <h2 className="mt-2 text-2xl font-black tracking-tight">Primeiros símbolos</h2>
                   </div>
                   <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10">
@@ -138,11 +138,11 @@ export default function LandingPage() {
               <div className="mt-4 grid grid-cols-2 gap-3">
                 <div className="rounded-3xl border border-black/10 p-4">
                   <p className="text-3xl font-black">3</p>
-                  <p className="mt-1 text-xs font-bold text-black/45">módulos base</p>
+                  <p className="mt-1 text-xs font-bold text-black/65">módulos base</p>
                 </div>
                 <div className="rounded-3xl border border-black/10 p-4">
                   <p className="text-3xl font-black">1 por vez</p>
-                  <p className="mt-1 text-xs font-bold text-black/45">desbloqueio guiado</p>
+                  <p className="mt-1 text-xs font-bold text-black/65">desbloqueio guiado</p>
                 </div>
               </div>
             </div>

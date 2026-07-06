@@ -1,61 +1,56 @@
-import { beforeEach, describe, expect, it } from "vitest";
-import { clearStoredSession, getStoredSession, loginWithLocalPassword } from "./auth";
+import { describe, expect, it, vi } from "vitest";
+import { DEFAULT_DISPLAY_NAME, mapSession, signUpWithPassword } from "./auth";
 
-const TEST_EMAIL = "aluno@hidenihon.local";
-const TEST_PASSWORD = "hidenihon123";
+const signUpMock = vi.fn();
 
-describe("local authentication", () => {
-  beforeEach(() => {
-    localStorage.clear();
-  });
+vi.mock("./supabase", () => ({
+  requireSupabase: () => ({
+    auth: {
+      signUp: signUpMock,
+    },
+  }),
+}));
 
-  it("rejects arbitrary credentials", async () => {
-    await expect(loginWithLocalPassword("qualquer@email.com", "qualquer123")).resolves.toBeNull();
-
-    expect(getStoredSession()).toBeNull();
-  });
-
-  it("accepts only the configured local credentials", async () => {
-    const session = await loginWithLocalPassword(TEST_EMAIL.toUpperCase(), TEST_PASSWORD);
-
-    expect(session?.user.email).toBe(TEST_EMAIL);
-    expect(getStoredSession()?.user.email).toBe(TEST_EMAIL);
-  });
-
-  it("invalidates sessions created for unknown users", () => {
-    localStorage.setItem("hidenihon_session_v1", JSON.stringify({
-      token: "legacy-token",
-      authVersion: "legacy-version",
+describe("supabase authentication mapping", () => {
+  it("maps a Supabase session to the app session shape", () => {
+    const session = {
+      access_token: "access-token",
       user: {
-        id: "intruso@email.com",
-        name: "Intruso",
-        email: "intruso@email.com",
+        id: "user-id",
+        email: "student@example.com",
+        user_metadata: { name: "Aluno" },
       },
-    }));
+    } as never;
 
-    expect(getStoredSession()).toBeNull();
-    expect(localStorage.getItem("hidenihon_session_v1")).toBeNull();
-  });
-
-  it("invalidates old sessions without the current auth version", () => {
-    localStorage.setItem("hidenihon_session_v1", JSON.stringify({
-      token: "legacy-token",
+    expect(mapSession(session)).toEqual({
+      token: "access-token",
       user: {
-        id: TEST_EMAIL,
-        name: "Estudante HideNihon",
-        email: TEST_EMAIL,
+        id: "user-id",
+        name: "Aluno",
+        email: "student@example.com",
       },
-    }));
-
-    expect(getStoredSession()).toBeNull();
-    expect(localStorage.getItem("hidenihon_session_v1")).toBeNull();
+    });
   });
 
-  it("clears legacy auto-created users on logout", () => {
-    localStorage.setItem("hidenihon_users_v1", JSON.stringify({}));
+  it("uses the default display name when signing up without a name", async () => {
+    signUpMock.mockResolvedValueOnce({ data: { user: { identities: [{}] }, session: null }, error: null });
 
-    clearStoredSession();
+    await expect(signUpWithPassword(" STUDENT@EXAMPLE.COM ", "Password1", "  ")).resolves.toBeNull();
 
-    expect(localStorage.getItem("hidenihon_users_v1")).toBeNull();
+    expect(signUpMock).toHaveBeenCalledWith({
+      email: "student@example.com",
+      password: "Password1",
+      options: {
+        data: { name: DEFAULT_DISPLAY_NAME },
+      },
+    });
+  });
+
+  it("rejects signup when Supabase returns no new identity", async () => {
+    signUpMock.mockResolvedValueOnce({ data: { user: { identities: [] }, session: null }, error: null });
+
+    await expect(signUpWithPassword("student@example.com", "Password1", "Aluno")).rejects.toThrow(
+      "Este e-mail já está cadastrado.",
+    );
   });
 });

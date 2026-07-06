@@ -1,14 +1,16 @@
+import { lazy, Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import Index from "./pages/Index.tsx";
-import ModulePage from "./pages/ModulePage.tsx";
-import LessonPage from "./pages/LessonPage.tsx";
-import Login from "./pages/Login.tsx";
-import LandingPage from "./pages/LandingPage.tsx";
 import PrivateRoute from "./routes/PrivateRoute.tsx";
+
+const Index = lazy(() => import("./pages/Index.tsx"));
+const ModulePage = lazy(() => import("./pages/ModulePage.tsx"));
+const LessonPage = lazy(() => import("./pages/LessonPage.tsx"));
+const Login = lazy(() => import("./pages/Login.tsx"));
+const LandingPage = lazy(() => import("./pages/LandingPage.tsx"));
 
 const queryClient = new QueryClient();
 
@@ -18,17 +20,19 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-        <Routes>
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/login" element={<Login />} />
+        <Suspense fallback={<div className="min-h-screen bg-[#f6f2ee]" />}>
+          <Routes>
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/login" element={<Login />} />
 
-          <Route element={<PrivateRoute />}>
-            <Route path="/home" element={<Index />} />
-            <Route path="/module/:module" element={<ModulePage />} />
-            <Route path="/module/:module/lesson/:lessonId" element={<LessonPage />} />
-          </Route>
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+            <Route element={<PrivateRoute />}>
+              <Route path="/home" element={<Index />} />
+              <Route path="/module/:module" element={<ModulePage />} />
+              <Route path="/module/:module/lesson/:lessonId" element={<LessonPage />} />
+            </Route>
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Suspense>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

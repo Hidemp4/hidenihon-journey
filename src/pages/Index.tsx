@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { MODULE_LIST } from "@/data/modules";
 import { useProgress, type ModuleProgress } from "@/hooks/useProgress";
-import { useAuthContext } from "@/contexts/AuthContext";
+import { useAuthContext } from "@/contexts/auth-context-core";
 import { t, FONT_SANS, FONT_JP } from "./Theme";
 import { SummaryCard } from "./SummaryCard";
 import { ModuleCard } from "./ModuleCard";
@@ -60,8 +60,8 @@ export default function Index() {
             </div>
             <button
               type="button"
-              onClick={() => {
-                logout();
+              onClick={async () => {
+                await logout();
                 navigate("/login", { replace: true });
               }}
               style={{ border: `1px solid ${t.border}`, background: t.primary, color: t.secondary, borderRadius: 999, padding: "7px 11px", fontSize: 11, fontWeight: 700 }}

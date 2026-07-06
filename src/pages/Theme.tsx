@@ -9,9 +9,9 @@ export const t = {
   primary:     "#ffffff",
   secondary:   "#000000",
   accent:      "#df2531",
-  accent65:    "rgba(223,37,49,0.65)",
+  accent65:    "rgba(171,28,38,0.9)",
   accent45:    "rgba(223,37,49,0.45)",
-  muted:       "rgba(0,0,0,0.4)",
-  border:      "rgba(0,0,0,0.08)",
-  surface:     "#f9f9f9",   // off-white for page bg (still primary family)
+  muted:       "rgba(0,0,0,0.62)",
+  border:      "rgba(0,0,0,0.14)",
+  surface:     "#f4f1ec",   // off-white for page bg (still primary family)
 } as const;

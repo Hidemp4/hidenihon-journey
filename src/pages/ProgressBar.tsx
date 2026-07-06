@@ -6,7 +6,7 @@ type Props = { percent: number };
 export function ProgressBar({ percent }: Props) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-      <div style={{ flex: 1, height: 3, borderRadius: 99, overflow: "hidden", background: t.border }}>
+      <div style={{ flex: 1, height: 5, borderRadius: 99, overflow: "hidden", background: "rgba(0,0,0,0.16)" }}>
         <motion.div
           initial={{ width: 0 }}
           animate={{ width: `${percent}%` }}
@@ -14,7 +14,7 @@ export function ProgressBar({ percent }: Props) {
           style={{ height: "100%", borderRadius: 99, background: t.accent }}
         />
       </div>
-      <span style={{ fontFamily: FONT_SANS, fontSize: 11, fontWeight: 500, color: t.muted, width: 32, textAlign: "right" }}>
+      <span style={{ fontFamily: FONT_SANS, fontSize: 11, fontWeight: 700, color: t.muted, width: 32, textAlign: "right" }}>
         {percent}%
       </span>
     </div>

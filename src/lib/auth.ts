@@ -29,9 +29,42 @@ export function mapSession(session: Session): AuthSession {
   };
 }
 
+function isRecoverableSessionError(error: unknown) {
+  if (!(error instanceof Error)) return false;
+
+  const message = error.message.toLowerCase();
+  return (
+    message.includes("auth session missing") ||
+    message.includes("refresh token") ||
+    message.includes("invalid token") ||
+    message.includes("jwt")
+  );
+}
+
+export async function consumeAuthRedirect(): Promise<AuthSession | null> {
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get("code");
+
+  if (code) {
+    const { data, error } = await requireSupabase().auth.exchangeCodeForSession(code);
+    if (error) throw error;
+    window.history.replaceState({}, document.title, `${window.location.pathname}${params.get("mode") ? `?mode=${params.get("mode")}` : ""}`);
+    return data.session ? mapSession(data.session) : null;
+  }
+
+  return null;
+}
+
 export async function getCurrentSession(): Promise<AuthSession | null> {
   const { data, error } = await requireSupabase().auth.getSession();
-  if (error) throw error;
+  if (error) {
+    if (isRecoverableSessionError(error)) {
+      await requireSupabase().auth.signOut({ scope: "local" });
+      return null;
+    }
+
+    throw error;
+  }
   return data.session ? mapSession(data.session) : null;
 }
 
@@ -45,6 +78,10 @@ export async function loginWithPassword(email: string, password: string): Promis
   return mapSession(data.session);
 }
 
+export function getAuthRedirectUrl() {
+  return `${window.location.origin}/login`;
+}
+
 export async function signUpWithPassword(email: string, password: string, name: string): Promise<AuthSession | null> {
   const normalizedEmail = email.trim().toLowerCase();
   const { data, error } = await requireSupabase().auth.signUp({
@@ -52,6 +89,7 @@ export async function signUpWithPassword(email: string, password: string, name: 
     password,
     options: {
       data: { name: name.trim() || DEFAULT_DISPLAY_NAME },
+      emailRedirectTo: getAuthRedirectUrl(),
     },
   });
   if (error) throw error;

@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { AuthContext } from "@/contexts/auth-context-core";
 import {
+    consumeAuthRedirect,
     getCurrentSession,
     hasActiveSession,
     loginWithPassword,
@@ -40,7 +41,8 @@ export const AuthProvider = ( {children} : { children: React.ReactNode }) => {
     useEffect(() => {
         let active = true;
 
-        getCurrentSession()
+        consumeAuthRedirect()
+            .then((redirectSession) => redirectSession ?? getCurrentSession())
             .then((currentSession) => {
                 if (active) setSession(currentSession);
             })

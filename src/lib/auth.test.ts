@@ -42,6 +42,7 @@ describe("supabase authentication mapping", () => {
       password: "Password1",
       options: {
         data: { name: DEFAULT_DISPLAY_NAME },
+        emailRedirectTo: "http://localhost:3000/login",
       },
     });
   });

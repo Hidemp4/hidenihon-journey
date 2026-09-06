@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import { ChevronLeft, KeyRound, LockKeyhole, Mail, ShieldCheck, UserPlus } from "lucide-react";
 import { useAuthContext } from "@/contexts/auth-context-core";
@@ -39,7 +39,7 @@ function validateStrongPassword(password: string) {
 export default function Login() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { token, login, signUp, requestPasswordReset, updatePassword, authError } = useAuthContext();
+  const { token, login, signUp, requestPasswordReset, updatePassword, hasRecoverySession, authError } = useAuthContext();
   const [mode, setMode] = useState<AuthMode>(() => getInitialMode(searchParams));
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -48,6 +48,21 @@ export default function Login() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (mode !== "reset-password") return;
+
+    let isMounted = true;
+    hasRecoverySession().then(hasSession => {
+      if (!isMounted || hasSession) return;
+      setMode("forgot-password");
+      setError("Link de recuperação inválido ou expirado. Peça um novo e-mail para redefinir sua senha.");
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [hasRecoverySession, mode]);
 
   if (token && mode !== "reset-password") return <Navigate to="/home" replace />;
 

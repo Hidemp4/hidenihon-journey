@@ -66,7 +66,7 @@ function ResultCard({ label, score, colorVar }: ResultCardProps) {
 export default function LessonPage() {
   const { module, lessonId } = useParams<{ module: string; lessonId: string }>();
   const navigate = useNavigate();
-  const { completeLesson, isLessonUnlocked } = useProgress();
+  const { completeLesson, getLessonProgress, isLessonUnlocked, error: progressError } = useProgress();
 
   const [sectionId, groupId] = (lessonId ?? "").split("__");
   const sectionData = SECTION_DATA[sectionId as keyof typeof SECTION_DATA];
@@ -74,6 +74,9 @@ export default function LessonPage() {
   const groupIndex = sectionData?.groups.findIndex(g => g.id === groupId) ?? -1;
   const lessonIds = sectionData?.groups.map(g => `${sectionId}__${g.id}`) ?? [];
   const unlocked = module && groupIndex >= 0 ? isLessonUnlocked(module as ModuleType, groupIndex, lessonIds) : false;
+
+  const lessonProgress = module && lessonId ? getLessonProgress(module as ModuleType, lessonId) : null;
+  const canSkipCompletedLesson = lessonProgress?.completed && lessonProgress.score === 100;
 
   const [step, setStep] = useState<Step>("intro");
   const [idScore, setIdScore] = useState(0);
@@ -165,6 +168,12 @@ export default function LessonPage() {
       </div>
 
       <div className="flex-1 overflow-y-auto py-4 max-w-lg mx-auto w-full">
+        {progressError && (
+          <p className="mx-4 mb-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+            {progressError}
+          </p>
+        )}
+
         {step === "intro" && (
           <IntroductionLesson chars={group.chars} onComplete={handleIntroComplete} />
         )}
@@ -178,6 +187,7 @@ export default function LessonPage() {
             <IdentificationLesson
               chars={group.chars}
               allCharsPool={sectionData.allChars}
+              canSkip={canSkipCompletedLesson}
               onComplete={handleIdentificationComplete}
             />
           </>
@@ -189,7 +199,7 @@ export default function LessonPage() {
               title="Exercício de Leitura"
               description="Tente ler cada palavra em japonês"
             />
-            <ReadingLesson words={group.readingWords} onComplete={handleReadingComplete} />
+            <ReadingLesson words={group.readingWords} canSkip={canSkipCompletedLesson} onComplete={handleReadingComplete} />
           </>
         )}
 

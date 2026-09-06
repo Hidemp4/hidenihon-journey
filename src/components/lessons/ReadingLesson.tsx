@@ -1,9 +1,10 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { ChevronRight } from "lucide-react";
 import type { ReadingWord } from "@/data/hiragana";
 
 interface ReadingLessonProps {
   words: ReadingWord[];
+  canSkip?: boolean;
   onComplete: (score: number, errorMap: Record<string, number>) => void;
 }
 
@@ -11,10 +12,12 @@ type Phase = "word" | "image" | "romaji" | "done";
 const jpFont = { fontFamily: "'M PLUS Rounded 1c', 'Noto Sans JP', sans-serif" };
 const phaseDelay: Partial<Record<Phase, number>> = { word: 1000, image: 3000 };
 
-export default function ReadingLesson({ words, onComplete }: ReadingLessonProps) {
+export default function ReadingLesson({ words, canSkip = false, onComplete }: ReadingLessonProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [phase, setPhase] = useState<Phase>("word");
   const [results, setResults] = useState<boolean[]>([]);
+  const advancingRef = useRef(false);
+  const completedRef = useRef(false);
   const currentWord = words[currentIndex];
 
   useEffect(() => {
@@ -24,23 +27,42 @@ export default function ReadingLesson({ words, onComplete }: ReadingLessonProps)
     return () => clearTimeout(timer);
   }, [phase, currentIndex]);
 
+  const finishLesson = useCallback(
+    (nextResults: boolean[]) => {
+      if (completedRef.current) return;
+      completedRef.current = true;
+      setPhase("done");
+      const correctCount = nextResults.filter(Boolean).length;
+      onComplete(Math.round((correctCount / words.length) * 100), {});
+    },
+    [onComplete, words.length]
+  );
+
   const handleAnswer = useCallback(
     (correct: boolean) => {
+      if (advancingRef.current || completedRef.current) return;
+      advancingRef.current = true;
       const nextResults = [...results, correct];
       setResults(nextResults);
       if (currentIndex < words.length - 1) {
         setTimeout(() => {
           setCurrentIndex(i => i + 1);
           setPhase("word");
+          advancingRef.current = false;
         }, 500);
         return;
       }
-      setPhase("done");
-      const correctCount = nextResults.filter(Boolean).length;
-      onComplete(Math.round((correctCount / words.length) * 100), {});
+      finishLesson(nextResults);
     },
-    [currentIndex, results, words.length, onComplete]
+    [currentIndex, finishLesson, results, words.length]
   );
+
+  const handleSkip = useCallback(() => {
+    if (completedRef.current) return;
+    const perfectResults = words.map(() => true);
+    setResults(perfectResults);
+    finishLesson(perfectResults);
+  }, [finishLesson, words]);
 
   const handleNext = () => phase === "romaji" && handleAnswer(true);
   if (!words.length || !currentWord) return null;
@@ -117,9 +139,21 @@ export default function ReadingLesson({ words, onComplete }: ReadingLessonProps)
         ))}
       </div>
 
-      <p className="text-center text-sm text-muted-foreground">
-        Palavra {currentIndex + 1} de {words.length}
-      </p>
+      <div className="flex items-center justify-between gap-3 px-1">
+        <p className="text-sm text-muted-foreground">
+          Palavra {currentIndex + 1} de {words.length}
+        </p>
+        {canSkip && (
+          <button
+            type="button"
+            onClick={handleSkip}
+            className="rounded-xl px-3 py-2 text-xs font-bold transition-all active:scale-95"
+            style={{ background: "hsl(var(--muted))", color: "hsl(var(--foreground))" }}
+          >
+            Pular exercício
+          </button>
+        )}
+      </div>
 
       <div
         key={currentIndex}
@@ -184,8 +218,10 @@ export default function ReadingLesson({ words, onComplete }: ReadingLessonProps)
 
       {phase === "romaji" && (
         <button
+          type="button"
           onClick={handleNext}
-          className="flex items-center justify-center gap-2 rounded-2xl py-4 text-base font-bold transition-all active:scale-95 animate-fade-in-up"
+          disabled={advancingRef.current}
+          className="flex items-center justify-center gap-2 rounded-2xl py-4 text-base font-bold transition-all active:scale-95 animate-fade-in-up disabled:opacity-70"
           style={{
             background: "hsl(var(--primary))",
             color: "hsl(var(--primary-foreground))",

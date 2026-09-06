@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { AuthContext } from "@/contexts/auth-context-core";
 import {
     getCurrentSession,
+    hasActiveSession,
     loginWithPassword,
     logoutSession,
     mapSession,
@@ -109,6 +110,16 @@ export const AuthProvider = ( {children} : { children: React.ReactNode }) => {
         }
     }, []);
 
+    const hasRecoverySession = useCallback(async () => {
+        try {
+            setAuthError("");
+            return await hasActiveSession();
+        } catch (error) {
+            setAuthError(getFriendlyAuthError(error, "Link de recuperação inválido ou expirado."));
+            return false;
+        }
+    }, []);
+
     const logout = useCallback(async () => {
         await logoutSession();
         setSession(null);
@@ -122,9 +133,10 @@ export const AuthProvider = ( {children} : { children: React.ReactNode }) => {
         signUp,
         requestPasswordReset,
         updatePassword,
+        hasRecoverySession,
         logout,
         authError,
-    }), [authError, loading, login, logout, requestPasswordReset, session, signUp, updatePassword]);
+    }), [authError, hasRecoverySession, loading, login, logout, requestPasswordReset, session, signUp, updatePassword]);
 
     return (
         <AuthContext.Provider value={value}>

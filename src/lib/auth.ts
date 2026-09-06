@@ -70,6 +70,12 @@ export async function sendPasswordResetEmail(email: string) {
   if (error) throw error;
 }
 
+export async function hasActiveSession() {
+  const { data, error } = await requireSupabase().auth.getSession();
+  if (error) throw error;
+  return Boolean(data.session);
+}
+
 export async function updateCurrentUserPassword(password: string): Promise<AuthSession> {
   const { data, error } = await requireSupabase().auth.updateUser({ password });
   if (error) throw error;

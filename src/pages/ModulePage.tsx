@@ -218,6 +218,35 @@ export default function ModulePage() {
   const moduleId = moduleMeta.id as ModuleType;
   const moduleColor = hslVar(moduleMeta.colorVar);
 
+  if (moduleMeta.locked) {
+    return (
+      <div className="min-h-screen flex flex-col" style={{ background: "hsl(var(--background))" }}>
+        <ModuleHeader moduleMeta={moduleMeta} color={moduleColor} onBack={() => navigate("/home")} />
+
+        <div className="flex-1 flex flex-col items-center justify-center gap-6 px-6 py-12 max-w-lg mx-auto w-full text-center">
+          <div
+            className="w-24 h-24 rounded-full flex items-center justify-center text-4xl font-jp"
+            style={{ background: hslVar(moduleMeta.bgVar), color: moduleColor }}
+          >
+            <Lock size={34} />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold mb-2">Módulo bloqueado</h2>
+            <p className="text-muted-foreground text-sm mb-4">Complete os módulos anteriores para liberar {moduleMeta.label}.</p>
+          </div>
+
+          <button
+            onClick={() => navigate("/home")}
+            className="w-full rounded-2xl py-3 font-semibold transition-all active:scale-95"
+            style={{ background: "hsl(var(--muted))", color: "hsl(var(--foreground))" }}
+          >
+            Voltar ao início
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   const renderLessonList = ({
     groups,
     summary,

@@ -36,6 +36,16 @@ function normalizeProgress(progress: AllProgress | null): AllProgress {
   return progress ? { ...createDefaultProgress(), ...progress } : createDefaultProgress();
 }
 
+function mergeErrorCounts(current: Record<string, number>, next: Record<string, number>) {
+  const merged = { ...current };
+
+  for (const [char, count] of Object.entries(next)) {
+    merged[char] = (merged[char] ?? 0) + count;
+  }
+
+  return merged;
+}
+
 type ProgressContextValue = ReturnType<typeof useProgressState>;
 
 const ProgressContext = createContext<ProgressContextValue | null>(null);
@@ -104,7 +114,7 @@ function useProgressState() {
                 completed: true,
                 score: Math.max(score, existing?.score ?? 0),
                 lastPracticed: new Date().toISOString(),
-                errorCount: { ...(existing?.errorCount ?? {}), ...errorMap },
+                errorCount: mergeErrorCounts(existing?.errorCount ?? {}, errorMap),
               },
             },
           },

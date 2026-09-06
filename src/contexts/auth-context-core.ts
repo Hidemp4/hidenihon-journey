@@ -6,9 +6,10 @@ interface AuthContextType {
     user: AuthSession["user"] | null;
     loading: boolean;
     login: (email: string, password: string) => Promise<boolean>;
-    signUp: (email: string, password: string, name: string) => Promise<{ status: "ok" | "confirm-email" | "error"; error?: string }>;
+    signUp: (email: string, password: string, name: string) => Promise<"ok" | "confirm-email" | "error">;
     requestPasswordReset: (email: string) => Promise<boolean>;
     updatePassword: (password: string) => Promise<boolean>;
+    hasRecoverySession: () => Promise<boolean>;
     logout: () => Promise<void>;
     authError: string;
 }

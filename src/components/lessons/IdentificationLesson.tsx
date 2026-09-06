@@ -5,6 +5,7 @@ import type { JapaneseChar } from "@/data/hiragana";
 interface IdentificationLessonProps {
   chars: JapaneseChar[];
   allCharsPool: JapaneseChar[];
+  canSkip?: boolean;
   onComplete: (score: number, errorMap: Record<string, number>) => void;
 }
 
@@ -90,13 +91,16 @@ function getOptionTone(
   };
 }
 
-export default function IdentificationLesson({ chars, allCharsPool, onComplete }: IdentificationLessonProps) {
+export default function IdentificationLesson({ chars, allCharsPool, canSkip = false, onComplete }: IdentificationLessonProps) {
   const [rows, setRows] = useState<Row[]>(() => buildRows(chars, allCharsPool));
   const [timeLeft, setTimeLeft] = useState(TIME_LIMIT);
   const [finished, setFinished] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const finishedRef = useRef(false);
 
   const finish = useCallback((finalRows: Row[]) => {
+    if (finishedRef.current) return;
+    finishedRef.current = true;
     if (timerRef.current) clearInterval(timerRef.current);
     setFinished(true);
     const errorMap: Record<string, number> = {};
@@ -107,6 +111,13 @@ export default function IdentificationLesson({ chars, allCharsPool, onComplete }
     });
     onComplete(Math.round((correct / finalRows.length) * 100), errorMap);
   }, [onComplete]);
+
+  const handleSkip = useCallback(() => {
+    if (finished) return;
+    const perfectRows = rows.map((row) => ({ ...row, selected: row.targetChar, correct: true }));
+    setRows(perfectRows);
+    finish(perfectRows);
+  }, [finish, finished, rows]);
 
   useEffect(() => {
     if (finished) return;
@@ -161,9 +172,21 @@ export default function IdentificationLesson({ chars, allCharsPool, onComplete }
         </span>
       </div>
 
-      <p className="text-sm text-muted-foreground text-center">
-        Encontre a letra japonesa correspondente ao romaji em cada linha
-      </p>
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-sm text-muted-foreground">
+          Encontre a letra japonesa correspondente ao romaji em cada linha
+        </p>
+        {canSkip && (
+          <button
+            type="button"
+            onClick={handleSkip}
+            className="rounded-xl px-3 py-2 text-xs font-bold transition-all active:scale-95"
+            style={{ background: "hsl(var(--muted))", color: "hsl(var(--foreground))" }}
+          >
+            Pular exercício
+          </button>
+        )}
+      </div>
 
       <div className="flex flex-col gap-2">
         {rows.map((row, rowIdx) => {

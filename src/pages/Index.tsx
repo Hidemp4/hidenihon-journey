@@ -13,7 +13,7 @@ function countCompleted(lessons: ModuleProgress["lessons"]) {
 
 export default function Index() {
   const navigate = useNavigate();
-  const { getModulePercent, progress } = useProgress();
+  const { getModulePercent, progress, loading, error } = useProgress();
   const { user, logout } = useAuthContext();
 
   const totalLessons = Object.values(progress).reduce((s, mp) => s + countCompleted(mp.lessons), 0);
@@ -78,6 +78,12 @@ export default function Index() {
           <div style={{ marginTop: 10 }}>
             <SummaryCard value={`${overallPct}%`} label="Progresso geral" />
           </div>
+
+          {(loading || error) && (
+            <p style={{ marginTop: 12, fontSize: 12, fontWeight: 600, color: error ? "#B42318" : t.muted }}>
+              {error || "Carregando progresso..."}
+            </p>
+          )}
         </div>
       </div>
 
@@ -89,6 +95,8 @@ export default function Index() {
 
         {MODULE_LIST.map((module, i) => {
           const mp = progress[module.id];
+          const isLocked = Boolean(module.locked);
+
           return (
             <ModuleCard
               key={module.id}
@@ -96,8 +104,10 @@ export default function Index() {
               index={i}
               percent={getModulePercent(module.id)}
               completedLessons={mp ? countCompleted(mp.lessons) : 0}
-              isLocked={Boolean(module.locked && i > 0)}
-              onClick={() => navigate(`/module/${module.id}`)}
+              isLocked={isLocked}
+              onClick={() => {
+                if (!isLocked) navigate(`/module/${module.id}`);
+              }}
             />
           );
         })}

@@ -56,7 +56,7 @@ export default function Index() {
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginTop: 18, background: "rgba(255,255,255,0.72)", border: `1px solid ${t.border}`, borderRadius: 14, padding: "10px 12px" }}>
             <div>
               <p style={{ fontFamily: FONT_SANS, fontSize: 12, fontWeight: 700, color: t.secondary, margin: 0 }}>{user?.name}</p>
-              <p style={{ fontFamily: FONT_SANS, fontSize: 10, color: t.muted, margin: "2px 0 0", textTransform: "uppercase", letterSpacing: "0.12em" }}>Usuário local</p>
+              <p style={{ fontFamily: FONT_SANS, fontSize: 10, color: t.muted, margin: "2px 0 0", textTransform: "uppercase", letterSpacing: "0.12em" }}>Usuário localhost</p>
             </div>
             <button
               type="button"

@@ -6,6 +6,7 @@ import { useAuthContext } from "@/contexts/auth-context-core";
 import { t, FONT_SANS, FONT_JP } from "./Theme";
 import { SummaryCard } from "./SummaryCard";
 import { ModuleCard } from "./ModuleCard";
+import { FloatingLearningNav } from "@/components/navigation/FloatingLearningNav";
 
 function countCompleted(lessons: ModuleProgress["lessons"]) {
   return Object.values(lessons).filter(({ completed }) => completed).length;
@@ -21,7 +22,7 @@ export default function Index() {
   const overallPct   = Math.round(MODULE_LIST.reduce((s, m) => s + getModulePercent(m.id), 0) / MODULE_LIST.length);
 
   return (
-    <div style={{ minHeight: "100vh", background: t.surface, fontFamily: FONT_SANS }}>
+    <div style={{ minHeight: "100vh", background: t.surface, fontFamily: FONT_SANS, paddingBottom: 104 }}>
 
       {/* ── Header ── */}
       <div style={{ background: t.primary, borderBottom: `1px solid ${t.border}`, padding: "36px 20px 28px" }}>
@@ -117,6 +118,8 @@ export default function Index() {
           🇯🇵 <strong style={{ color: t.secondary }}>HideNihon</strong> — Aprenda japonês com introdução, identificação e leitura
         </p>
       </div>
+
+      <FloatingLearningNav />
     </div>
   );
 }

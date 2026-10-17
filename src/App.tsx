@@ -11,6 +11,7 @@ const ModulePage = lazy(() => import("./pages/ModulePage.tsx"));
 const LessonPage = lazy(() => import("./pages/LessonPage.tsx"));
 const Login = lazy(() => import("./pages/Login.tsx"));
 const LandingPage = lazy(() => import("./pages/LandingPage.tsx"));
+const KanaReactionPage = lazy(() => import("./features/kana-reaction/KanaReactionPage.tsx"));
 
 const queryClient = new QueryClient();
 
@@ -27,6 +28,7 @@ const App = () => (
 
             <Route element={<PrivateRoute />}>
               <Route path="/home" element={<Index />} />
+              <Route path="/reaction-time" element={<KanaReactionPage />} />
               <Route path="/module/:module" element={<ModulePage />} />
               <Route path="/module/:module/lesson/:lessonId" element={<LessonPage />} />
             </Route>

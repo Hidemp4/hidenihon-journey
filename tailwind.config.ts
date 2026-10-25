@@ -19,7 +19,7 @@ export default {
     extend: {
       fontFamily: {
         jp: ["'M PLUS Rounded 1c'", "'Noto Sans JP'", "sans-serif"],
-        ui: ["Inter", "sans-serif"],
+        ui: ["Manrope", "sans-serif"],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -77,6 +77,19 @@ export default {
         },
         "progress-track": "hsl(var(--progress-track))",
         "progress-fill": "hsl(var(--progress-fill))",
+        journey: {
+          surface: "hsl(var(--journey-surface))",
+          orange: "hsl(var(--journey-orange))",
+          "orange-hover": "hsl(var(--journey-orange-hover))",
+          forest: "hsl(var(--journey-forest))",
+          "forest-deep": "hsl(var(--journey-forest-deep))",
+          leaf: "hsl(var(--journey-leaf))",
+          sand: "hsl(var(--journey-sand))",
+          gold: "hsl(var(--journey-gold))",
+          wood: "hsl(var(--journey-wood))",
+          "wood-deep": "hsl(var(--journey-wood-deep))",
+          ink: "hsl(var(--journey-ink))",
+        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",

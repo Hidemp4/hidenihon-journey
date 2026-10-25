@@ -58,10 +58,23 @@
     --progress-track: 36 18% 82%;
     --progress-fill: 3 78% 44%;
 
+    /* Konoha-inspired journey surfaces and accents */
+    --journey-surface: 38 42% 92%;
+    --journey-orange: 22 91% 52%;
+    --journey-orange-hover: 24 96% 58%;
+    --journey-forest: 142 34% 22%;
+    --journey-forest-deep: 148 34% 10%;
+    --journey-leaf: 116 38% 35%;
+    --journey-sand: 39 63% 88%;
+    --journey-gold: 42 91% 64%;
+    --journey-wood: 24 39% 27%;
+    --journey-wood-deep: 21 42% 12%;
+    --journey-ink: 155 24% 11%;
+
     /* Font families */
     --font-jp: 'M PLUS Rounded 1c', 'Noto Sans JP', sans-serif;
-    --font-ui: 'Inter', sans-serif;
-    --font-display: 'M PLUS Rounded 1c', 'Inter', sans-serif;
+    --font-ui: 'Manrope', sans-serif;
+    --font-display: 'Manrope', sans-serif;
 
     /* Kana Dojo mastery ranks */
     --rank-aprendiz: 32 86% 56%;
@@ -178,8 +191,32 @@
   .char-card:active {
     transform: scale(0.95);
   }
-}
 
+  .journey-home {
+    background:
+      radial-gradient(circle at 10% 12%, hsl(var(--journey-gold) / 0.12), transparent 28rem),
+      hsl(var(--journey-surface));
+  }
+
+  .journey-leaf-pattern {
+    background-image:
+      radial-gradient(ellipse at 20% 30%, hsl(var(--journey-leaf) / 0.28) 0 2px, transparent 3px),
+      radial-gradient(ellipse at 70% 60%, hsl(var(--journey-gold) / 0.16) 0 2px, transparent 3px);
+    background-size: 54px 72px, 80px 94px;
+    transform: rotate(-8deg) scale(1.2);
+  }
+
+  .mission-card:focus-visible {
+    outline: 3px solid hsl(var(--journey-orange));
+    outline-offset: 4px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .mission-card img {
+      transition: none;
+    }
+  }
+}
 @keyframes draw-stroke {
   from {
     stroke-dashoffset: 300;

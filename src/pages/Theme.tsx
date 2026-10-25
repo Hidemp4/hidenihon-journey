@@ -2,7 +2,7 @@
 // 30 % — secondary (black text / dark elements)
 // 10 % — accent (Japanese red)
 
-export const FONT_SANS = "'Inter', sans-serif";
+export const FONT_SANS = "'Manrope', sans-serif";
 export const FONT_JP   = "'Zen Kurenaido', 'KyokaFont', serif";
 
 export const t = {

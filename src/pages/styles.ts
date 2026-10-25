@@ -13,7 +13,7 @@ export const palette = {
 };
 
 export const fonts = {
-  sans: "'Inter', sans-serif",
+  sans: "'Manrope', sans-serif",
   jp: "'Zen Kurenaido', 'KyokaFont', serif",
 };
 

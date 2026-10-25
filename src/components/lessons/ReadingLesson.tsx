@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { ChevronRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import type { ReadingWord } from "@/data/hiragana";
+import { Button, Eyebrow, LessonStack, ResultCard, SegmentedProgress, SkipButton, Surface } from "./ui";
+import { JP_FONT, cx, getResultTone, scorePercent, useFinishOnce } from "./lessonKit";
 
 interface ReadingLessonProps {
   words: ReadingWord[];
@@ -9,7 +11,6 @@ interface ReadingLessonProps {
 }
 
 type Phase = "word" | "image" | "romaji" | "done";
-const jpFont = { fontFamily: "'M PLUS Rounded 1c', 'Noto Sans JP', sans-serif" };
 const phaseDelay: Partial<Record<Phase, number>> = { word: 1000, image: 3000 };
 
 export default function ReadingLesson({ words, canSkip = false, onComplete }: ReadingLessonProps) {
@@ -17,7 +18,7 @@ export default function ReadingLesson({ words, canSkip = false, onComplete }: Re
   const [phase, setPhase] = useState<Phase>("word");
   const [results, setResults] = useState<boolean[]>([]);
   const advancingRef = useRef(false);
-  const completedRef = useRef(false);
+  const { finishOnce, doneRef } = useFinishOnce();
   const currentWord = words[currentIndex];
 
   useEffect(() => {
@@ -28,25 +29,23 @@ export default function ReadingLesson({ words, canSkip = false, onComplete }: Re
   }, [phase, currentIndex]);
 
   const finishLesson = useCallback(
-    (nextResults: boolean[]) => {
-      if (completedRef.current) return;
-      completedRef.current = true;
-      setPhase("done");
-      const correctCount = nextResults.filter(Boolean).length;
-      onComplete(Math.round((correctCount / words.length) * 100), {});
-    },
-    [onComplete, words.length]
+    (nextResults: boolean[]) =>
+      finishOnce(() => {
+        setPhase("done");
+        onComplete(scorePercent(nextResults.filter(Boolean).length, words.length), {});
+      }),
+    [finishOnce, onComplete, words.length]
   );
 
   const handleAnswer = useCallback(
     (correct: boolean) => {
-      if (advancingRef.current || completedRef.current) return;
+      if (advancingRef.current || doneRef.current) return;
       advancingRef.current = true;
       const nextResults = [...results, correct];
       setResults(nextResults);
       if (currentIndex < words.length - 1) {
         setTimeout(() => {
-          setCurrentIndex(i => i + 1);
+          setCurrentIndex((i) => i + 1);
           setPhase("word");
           advancingRef.current = false;
         }, 500);
@@ -54,162 +53,115 @@ export default function ReadingLesson({ words, canSkip = false, onComplete }: Re
       }
       finishLesson(nextResults);
     },
-    [currentIndex, finishLesson, results, words.length]
+    [currentIndex, doneRef, finishLesson, results, words.length]
   );
 
   const handleSkip = useCallback(() => {
-    if (completedRef.current) return;
-    const perfectResults = words.map(() => true);
-    setResults(perfectResults);
-    finishLesson(perfectResults);
-  }, [finishLesson, words]);
+    if (doneRef.current) return;
+    const perfect = words.map(() => true);
+    setResults(perfect);
+    finishLesson(perfect);
+  }, [doneRef, finishLesson, words]);
 
   const handleNext = () => phase === "romaji" && handleAnswer(true);
   if (!words.length || !currentWord) return null;
+
   const correctCount = results.filter(Boolean).length;
-  const percent = Math.round((correctCount / words.length) * 100);
-  const passed = percent >= 80;
+  const percent = scorePercent(correctCount, words.length);
+  const revealed = phase === "image" || phase === "romaji";
 
+  /* ---------- Resultado ---------- */
   if (phase === "done") {
+    const tone = getResultTone(percent);
     return (
-      <div className="flex flex-col items-center gap-5 px-4 pb-6 animate-fade-in-up">
-        <div
-          className="w-full rounded-3xl p-6 text-center"
-          style={{
-            background: passed ? "hsl(var(--success-bg))" : "hsl(var(--warning-bg))",
-            border: `2px solid ${passed ? "hsl(var(--success))" : "hsl(var(--warning))"}`,
-          }}
-        >
-          <p className="text-5xl mb-2">{passed ? "🎉" : "📚"}</p>
-          <p className="text-3xl font-bold" style={{ color: passed ? "hsl(var(--success))" : "hsl(var(--foreground))" }}>
-            {percent}%
-          </p>
-          <p className="text-sm text-muted-foreground mt-1">
-            Você leu {correctCount}/{words.length} palavras
-          </p>
-        </div>
+      <LessonStack className="gap-5">
+        <ResultCard
+          icon={tone.Icon}
+          jp={tone.jp}
+          label={tone.label}
+          percent={percent}
+          caption={`Você leu ${correctCount}/${words.length} palavras`}
+        />
 
-        <div className="w-full flex flex-col gap-2">
+        <div className="flex flex-col gap-2">
+          <Eyebrow className="mx-1 mb-0.5">Palavras da lição</Eyebrow>
           {words.map((w, i) => (
-            <div
-              key={i}
-              className="flex items-center justify-between rounded-2xl px-4 py-3 border"
-              style={{
-                background: "hsl(var(--card))",
-                borderColor: "hsl(var(--border))",
-              }}
-            >
-              <div className="flex items-center gap-3">
-                <span className="text-2xl">{w.emoji}</span>
-                <div>
-                  <p
-                    className="text-xl font-medium"
-                    style={jpFont}
-                  >
-                    {w.word}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {w.romaji} • {w.meaning}
-                  </p>
-                </div>
+            <Surface key={i} className="flex items-center gap-3.5 px-4 py-3">
+              <span className="grid h-[46px] w-[46px] shrink-0 place-items-center rounded-full border border-border bg-white text-2xl">
+                {w.emoji}
+              </span>
+              <div className="min-w-0">
+                <p className={cx("m-0 text-[22px] font-bold leading-[1.1]", JP_FONT)}>{w.word}</p>
+                <p className="mb-0 mt-1 text-xs text-muted-foreground">
+                  <span className="font-extrabold text-primary">{w.romaji}</span> • {w.meaning}
+                </p>
               </div>
-            </div>
+            </Surface>
           ))}
         </div>
-      </div>
+      </LessonStack>
     );
   }
 
+  /* ---------- Exercício ---------- */
   return (
-    <div className="flex flex-col gap-5 px-4 pb-6">
-      <div className="flex items-center gap-2">
-        {words.map((_, i) => (
-          <div
-            key={i}
-            className="flex-1 h-2 rounded-full transition-all duration-500"
-            style={{
-              background:
-                i < currentIndex
-                  ? "hsl(var(--success))"
-                  : i === currentIndex
-                  ? "hsl(var(--primary))"
-                  : "hsl(var(--border))",
-            }}
-          />
-        ))}
-      </div>
+    <LessonStack className="animate-none">
+      <SegmentedProgress total={words.length} current={currentIndex} />
 
       <div className="flex items-center justify-between gap-3 px-1">
-        <p className="text-sm text-muted-foreground">
+        <Eyebrow>
           Palavra {currentIndex + 1} de {words.length}
-        </p>
-        {canSkip && (
-          <button
-            type="button"
-            onClick={handleSkip}
-            className="rounded-xl px-3 py-2 text-xs font-bold transition-all active:scale-95"
-            style={{ background: "hsl(var(--muted))", color: "hsl(var(--foreground))" }}
-          >
-            Pular exercício
-          </button>
-        )}
+        </Eyebrow>
+        {canSkip && <SkipButton onClick={handleSkip} />}
       </div>
 
-      <div
+      <Surface
         key={currentIndex}
-        className="rounded-3xl bg-card border border-border shadow-sm flex flex-col items-center gap-4 p-8 animate-scale-in min-h-[300px] justify-center"
+        tone="dark"
+        glow={revealed}
+        rootClassName="animate-scale-in"
+        className="flex min-h-[320px] flex-col items-center justify-center gap-4 p-8"
       >
-        <div
-          className="text-6xl font-medium transition-all duration-300"
-          style={{ ...jpFont, color: "hsl(var(--foreground))" }}
-        >
+        <div className={cx("text-center text-[60px] font-bold leading-[1.1]", JP_FONT)}>
           {currentWord.word}
         </div>
 
         <div
-          className="text-7xl transition-all duration-500"
-          style={{
-            opacity: phase === "image" || phase === "romaji" ? 1 : 0,
-            transform: phase === "image" || phase === "romaji" ? "scale(1)" : "scale(0.6)",
-          }}
+          className={cx(
+            "text-[68px] leading-none transition-all duration-500",
+            revealed ? "scale-100 opacity-100" : "scale-[0.6] opacity-0"
+          )}
         >
           {currentWord.emoji}
         </div>
 
-        {(phase === "image" || phase === "romaji") && (
-          <p className="text-sm text-muted-foreground animate-fade-in-up">
+        {revealed && (
+          <Eyebrow tone="accent" size="md" className="animate-fade-in-up">
             {currentWord.meaning}
-          </p>
+          </Eyebrow>
         )}
 
         <div
-          className="transition-all duration-500"
-          style={{ opacity: phase === "romaji" ? 1 : 0, transform: phase === "romaji" ? "translateY(0)" : "translateY(8px)" }}
+          className={cx(
+            "transition-all duration-500",
+            phase === "romaji" ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0"
+          )}
         >
-          <div
-            className="rounded-2xl px-6 py-3 text-2xl font-bold"
-            style={{
-              background: "hsl(var(--primary) / 0.1)",
-              color: "hsl(var(--primary))",
-            }}
-          >
+          <div className="rounded-full bg-primary px-6 py-2.5 text-2xl font-extrabold tracking-tight text-primary-foreground shadow-[0_10px_24px_hsl(var(--primary)/0.4)]">
             {currentWord.romaji}
           </div>
         </div>
-      </div>
+      </Surface>
 
       {phase === "image" && (
-        <div className="flex flex-col items-center gap-2 animate-fade-in-up">
-          <p className="text-xs text-muted-foreground">Tente ler em japonês...</p>
-          <div className="flex gap-1">
-            {[0, 1, 2].map(i => (
+        <div className="flex animate-fade-in-up flex-col items-center gap-2">
+          <Eyebrow>Tente ler em japonês</Eyebrow>
+          <div className="flex gap-1.5">
+            {[0, 1, 2].map((i) => (
               <div
                 key={i}
-                className="w-2 h-2 rounded-full"
-                style={{
-                  background: "hsl(var(--muted-foreground))",
-                  animation: `pulse 1.2s ease-in-out ${i * 0.4}s infinite`,
-                }}
+                className="h-2 w-2 rounded-full bg-primary"
+                style={{ animation: `pulse 1.2s ease-in-out ${i * 0.4}s infinite` }}
               />
             ))}
           </div>
@@ -217,21 +169,15 @@ export default function ReadingLesson({ words, canSkip = false, onComplete }: Re
       )}
 
       {phase === "romaji" && (
-        <button
-          type="button"
+        <Button
+          iconRight={ArrowRight}
           onClick={handleNext}
           disabled={advancingRef.current}
-          className="flex items-center justify-center gap-2 rounded-2xl py-4 text-base font-bold transition-all active:scale-95 animate-fade-in-up disabled:opacity-70"
-          style={{
-            background: "hsl(var(--primary))",
-            color: "hsl(var(--primary-foreground))",
-            boxShadow: "0 4px 20px hsl(var(--primary) / 0.35)",
-          }}
+          className="animate-fade-in-up"
         >
           {currentIndex < words.length - 1 ? "Próxima palavra" : "Concluir lição"}
-          <ChevronRight size={20} />
-        </button>
+        </Button>
       )}
-    </div>
+    </LessonStack>
   );
 }

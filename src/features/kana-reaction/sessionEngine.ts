@@ -1,6 +1,8 @@
 import type { TrainingKana } from "./kanaDeck";
 import type { KanaReactionAttempt, KanaReactionPrompt, KanaReactionSettings } from "./types";
 
+export const ADVANCED_RESPONSE_LIMIT_MS = 5_000;
+
 export const DEFAULT_REACTION_SETTINGS: KanaReactionSettings = {
   alphabet: "hiragana",
   mode: "quantity",
@@ -51,6 +53,10 @@ export function createAttempt(prompt: KanaReactionPrompt, answer: string, now = 
     completionMs: Math.max(0, Math.round(now - prompt.shownAt)),
     createdAt: new Date().toISOString(),
   };
+}
+
+export function createTimeoutAttempt(prompt: KanaReactionPrompt, now = prompt.shownAt + ADVANCED_RESPONSE_LIMIT_MS): KanaReactionAttempt {
+  return createAttempt(prompt, "", now);
 }
 
 export function shouldFinishSession(settings: KanaReactionSettings, attemptCount: number) {

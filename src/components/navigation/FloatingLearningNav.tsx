@@ -15,7 +15,7 @@ const brand = {
 
 const items = [
   { to: "/home", label: "Trilha", jp: "道", icon: BookOpen },
-  { to: "/reaction-time", label: "Reaction", jp: "反応", icon: Zap },
+  { to: "/dojo", label: "Dojô", jp: "道場", icon: Zap },
 ];
 
 export function FloatingLearningNav() {
@@ -86,6 +86,9 @@ export function FloatingLearningNav() {
   );
 }
 
-export function ReactionStatsIcon() {
+export function DojoStatsIcon() {
   return <BarChart3 size={16} strokeWidth={2.4} />;
 }
+
+/** @deprecated Use `DojoStatsIcon`. Mantido para não quebrar imports antigos. */
+export const ReactionStatsIcon = DojoStatsIcon;

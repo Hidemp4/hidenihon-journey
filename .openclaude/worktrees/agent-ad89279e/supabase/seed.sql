@@ -1,0 +1,2 @@
+-- Intentionally empty.
+-- Do not version test user credentials. Create local users through Supabase Auth or the app signup flow.

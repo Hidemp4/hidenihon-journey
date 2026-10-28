@@ -1,0 +1,43 @@
+import { lazy, Suspense } from "react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { Toaster } from "@/components/ui/toaster";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import PrivateRoute from "./routes/PrivateRoute.tsx";
+
+const Index = lazy(() => import("./pages/Index.tsx"));
+const ModulePage = lazy(() => import("./pages/ModulePage.tsx"));
+const LessonPage = lazy(() => import("./pages/LessonPage.tsx"));
+const Login = lazy(() => import("./pages/Login.tsx"));
+const LandingPage = lazy(() => import("./pages/LandingPage.tsx"));
+const KanaReactionPage = lazy(() => import("./features/kana-reaction/KanaReactionPage.tsx"));
+
+const queryClient = new QueryClient();
+
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <TooltipProvider>
+      <Toaster />
+      <Sonner />
+      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <Suspense fallback={<div className="min-h-screen bg-[#f6f2ee]" />}>
+          <Routes>
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/login" element={<Login />} />
+
+            <Route element={<PrivateRoute />}>
+              <Route path="/home" element={<Index />} />
+              <Route path="/reaction-time" element={<KanaReactionPage />} />
+              <Route path="/module/:module" element={<ModulePage />} />
+              <Route path="/module/:module/lesson/:lessonId" element={<LessonPage />} />
+            </Route>
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Suspense>
+      </BrowserRouter>
+    </TooltipProvider>
+  </QueryClientProvider>
+);
+
+export default App;

@@ -115,7 +115,7 @@ export async function hasActiveSession() {
 }
 
 export async function updateCurrentUserPassword(password: string): Promise<AuthSession> {
-  const { data, error } = await requireSupabase().auth.updateUser({ password });
+  const { error } = await requireSupabase().auth.updateUser({ password });
   if (error) throw error;
 
   const { data: sessionData, error: sessionError } = await requireSupabase().auth.getSession();

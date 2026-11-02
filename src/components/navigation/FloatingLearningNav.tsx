@@ -1,4 +1,4 @@
-import { BarChart3, BookOpen, Zap } from "lucide-react";
+import { BookOpen, Zap } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { FONT_SANS } from "@/pages/Theme";
 
@@ -85,10 +85,3 @@ export function FloatingLearningNav() {
     </nav>
   );
 }
-
-export function DojoStatsIcon() {
-  return <BarChart3 size={16} strokeWidth={2.4} />;
-}
-
-/** @deprecated Use `DojoStatsIcon`. Mantido para não quebrar imports antigos. */
-export const ReactionStatsIcon = DojoStatsIcon;

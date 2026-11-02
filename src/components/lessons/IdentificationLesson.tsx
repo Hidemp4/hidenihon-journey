@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import { CheckCircle, Clock, XCircle } from "lucide-react";
 import type { JapaneseChar } from "@/data/hiragana";
-import { Eyebrow, LessonStack, ResultCard, SkipButton } from "./ui";
+import { LessonStack, ResultCard, SkipButton } from "./ui";
 import {
   JP_FONT,
   cx,

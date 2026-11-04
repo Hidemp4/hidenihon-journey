@@ -1,16 +1,22 @@
-import type { ButtonHTMLAttributes, ReactNode } from "react";
+import type { ButtonHTMLAttributes, ReactNode, Ref } from "react";
 import { FastForward } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { cx } from "./lessonKit";
+import { buttonClass, cx, type ButtonSize, type ButtonVariant } from "./lessonKit";
+
+/*
+ * Peças das lições no estilo da Trilha e do Dojô: tokens `journey-*`, bordas grossas, sombra
+ * "dura" de baixo (clima de interface de jogo) e moldura floresta/madeira nos destaques.
+ */
 
 /* ---------- Eyebrow ---------- */
 
 const EYEBROW_TONE = {
-  accent: "text-accent",
-  muted: "text-muted-foreground",
-  primary: "text-primary",
-  onDark: "text-[hsl(var(--surface-foreground)/0.6)]",
-  inverse: "text-[hsl(var(--surface-foreground))]",
+  /** Dourado, sobre o verde-floresta. */
+  accent: "text-journey-gold",
+  muted: "text-journey-wood",
+  primary: "text-journey-orange",
+  onDark: "text-white/75",
+  inverse: "text-white",
 };
 
 type EyebrowProps = {
@@ -20,13 +26,13 @@ type EyebrowProps = {
   children: ReactNode;
 };
 
-/** Rótulo pequeno em caixa alta com letter-spacing largo. */
+/** Rótulo pequeno em caixa alta (11px é o mínimo legível). */
 export function Eyebrow({ tone = "muted", size = "sm", className, children }: EyebrowProps) {
   return (
     <p
       className={cx(
-        "m-0 font-extrabold uppercase tracking-[0.14em]",
-        size === "sm" ? "text-[10px]" : "text-xs",
+        "m-0 font-black uppercase tracking-[0.14em]",
+        size === "sm" ? "text-[11px]" : "text-xs",
         EYEBROW_TONE[tone],
         className
       )}
@@ -39,48 +45,19 @@ export function Eyebrow({ tone = "muted", size = "sm", className, children }: Ey
 /* ---------- Button ---------- */
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
-  variant?: "primary" | "ghost" | "dark";
-  size?: "md" | "sm";
+  variant?: ButtonVariant;
+  size?: ButtonSize;
   iconLeft?: LucideIcon;
   iconRight?: LucideIcon;
 };
 
-const BUTTON_VARIANT = {
-  primary:
-    "bg-primary text-primary-foreground shadow-[0_12px_28px_hsl(var(--primary)/0.4)]",
-  ghost: "border-[1.5px] border-border bg-transparent text-foreground",
-  dark: "bg-[hsl(var(--surface))] text-[hsl(var(--surface-foreground))]",
-};
-
-const BUTTON_SIZE = {
-  md: "w-full px-5 py-4 text-[15px]",
-  sm: "px-3.5 py-2 text-xs",
-};
-
-/** Botão em pílula: primary (laranja), ghost (contorno) ou dark (verde-floresta). */
-export function Button({
-  variant = "primary",
-  size = "md",
-  iconLeft: IconLeft,
-  iconRight: IconRight,
-  className,
-  children,
-  ...props
-}: ButtonProps) {
+/** primary (laranja), ghost (papel) ou dark (verde-floresta). */
+export function Button({ variant = "primary", size = "md", iconLeft: IconLeft, iconRight: IconRight, className, children, ...props }: ButtonProps) {
   return (
-    <button
-      type="button"
-      className={cx(
-        "inline-flex items-center justify-center gap-2 rounded-full font-extrabold tracking-tight transition-all active:scale-95 disabled:opacity-70",
-        BUTTON_VARIANT[variant],
-        BUTTON_SIZE[size],
-        className
-      )}
-      {...props}
-    >
-      {IconLeft && <IconLeft size={size === "sm" ? 14 : 16} strokeWidth={2.6} />}
+    <button type="button" className={buttonClass(variant, size, className)} {...props}>
+      {IconLeft && <IconLeft size={size === "sm" ? 14 : 16} strokeWidth={2.6} aria-hidden="true" />}
       {children}
-      {IconRight && <IconRight size={18} strokeWidth={2.6} />}
+      {IconRight && <IconRight size={18} strokeWidth={2.6} aria-hidden="true" />}
     </button>
   );
 }
@@ -103,22 +80,26 @@ type SurfaceProps = {
   children: ReactNode;
 };
 
-/** Card: `dark` (verde-floresta, com brilho laranja opcional) ou `light` (creme). */
+/**
+ * `light`: papel branco com borda e sombra dura (o Panel do Dojô).
+ * `dark`: moldura verde-floresta com borda de madeira e folhas ao fundo (os palcos do Dojô).
+ */
 export function Surface({ tone = "light", glow = false, rootClassName, className, children }: SurfaceProps) {
   return (
     <div
       className={cx(
-        "relative overflow-hidden",
+        "relative isolate overflow-hidden",
         tone === "dark"
-          ? "rounded-[32px] border border-[hsl(var(--surface-foreground)/0.14)] bg-[hsl(var(--surface))] text-[hsl(var(--surface-foreground))] shadow-[0_18px_40px_hsl(var(--surface)/0.26)]"
-          : "rounded-3xl border-[1.5px] border-border bg-card text-foreground shadow-[0_8px_22px_hsl(var(--surface)/0.07)]",
+          ? "rounded-[2rem] border-2 border-[hsl(var(--journey-wood-deep))] bg-journey-forest-deep text-white shadow-[0_8px_0_hsl(var(--journey-wood-deep)/.35)]"
+          : "rounded-2xl border-2 border-journey-wood/15 bg-white/85 text-journey-ink shadow-[0_5px_0_hsl(var(--journey-wood)/.12)]",
         rootClassName
       )}
     >
+      {tone === "dark" && <div aria-hidden className="journey-leaf-pattern absolute inset-0 -z-10 opacity-15" />}
       {glow && (
         <div
           aria-hidden
-          className="pointer-events-none absolute left-1/2 top-1/2 h-[280px] w-[280px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,hsl(var(--primary)/0.25)_0%,transparent_70%)]"
+          className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[280px] w-[280px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,hsl(var(--journey-orange)/0.28)_0%,transparent_70%)]"
         />
       )}
       <div className={cx("relative h-full", className)}>{children}</div>
@@ -134,43 +115,27 @@ type SegmentedProgressProps = {
   tone?: "onLight" | "onDark";
   /** Estilo de bolinhas (a atual vira uma pílula maior). */
   dots?: boolean;
-  /** Rótulo opcional abaixo de cada segmento. */
-  labels?: string[];
   className?: string;
 };
 
-export function SegmentedProgress({
-  total,
-  current,
-  tone = "onLight",
-  dots = false,
-  labels,
-  className,
-}: SegmentedProgressProps) {
+/** Progresso dentro da etapa (letras, palavras). Decorativo: o texto "N de M" fica ao lado. */
+export function SegmentedProgress({ total, current, tone = "onLight", dots = false, className }: SegmentedProgressProps) {
   const onDark = tone === "onDark";
-  const done = onDark ? "bg-primary shadow-[0_0_12px_hsl(var(--primary)/0.5)]" : "bg-[hsl(var(--surface))]";
-  const active = onDark
-    ? "bg-[hsl(var(--primary)/0.5)]"
-    : "bg-primary shadow-[0_0_12px_hsl(var(--primary)/0.5)]";
-  const upcoming = onDark ? "bg-[hsl(var(--surface-foreground)/0.15)]" : "bg-border";
+  const done = "bg-journey-orange";
+  const active = onDark ? "bg-journey-gold" : "bg-journey-orange shadow-[0_0_0_3px_hsl(var(--journey-orange)/.2)]";
+  const upcoming = onDark ? "bg-white/20" : "bg-journey-wood/15";
 
   return (
-    <div className={cx("flex gap-1.5", dots && "items-center justify-center", className)}>
+    <div aria-hidden="true" className={cx("flex gap-1.5", dots && "items-center justify-center", className)}>
       {Array.from({ length: total }, (_, i) => (
-        <div key={i} className={cx("flex flex-col gap-1.5", !dots && "flex-1")}>
-          <div
-            className={cx(
-              "rounded-full transition-all duration-500",
-              dots ? (i === current ? "h-2 w-7" : "h-2 w-2") : "h-1.5 w-full",
-              i < current ? done : i === current ? active : upcoming
-            )}
-          />
-          {labels && (
-            <Eyebrow tone={i <= current ? "inverse" : "onDark"} className="text-center">
-              {labels[i]}
-            </Eyebrow>
+        <div
+          key={i}
+          className={cx(
+            "rounded-full transition-all duration-500",
+            dots ? (i === current ? "h-2 w-7" : "h-2 w-2") : "h-2 flex-1",
+            i < current ? done : i === current ? active : upcoming
           )}
-        </div>
+        />
       ))}
     </div>
   );
@@ -178,19 +143,12 @@ export function SegmentedProgress({
 
 /* ---------- IconBadge / ResultCard / ScoreTile ---------- */
 
-export function IconBadge({
-  icon: Icon,
-  size = "md",
-  className,
-}: {
-  icon: LucideIcon;
-  size?: "md" | "lg";
-  className?: string;
-}) {
+export function IconBadge({ icon: Icon, size = "md", className }: { icon: LucideIcon; size?: "md" | "lg"; className?: string }) {
   return (
     <div
+      aria-hidden="true"
       className={cx(
-        "grid place-items-center rounded-full bg-primary text-primary-foreground shadow-[0_10px_24px_hsl(var(--primary)/0.4)]",
+        "grid place-items-center rounded-full border-2 border-journey-gold/60 bg-journey-orange text-white shadow-[0_5px_0_hsl(var(--journey-orange)/.45)]",
         size === "lg" ? "h-[104px] w-[104px]" : "h-12 w-12",
         className
       )}
@@ -208,18 +166,21 @@ type ResultCardProps = {
   caption: string;
 };
 
-/** Cartão de resultado de um exercício (ícone, kanji, rótulo, percentual). */
+/** Resultado de um exercício: medalha, frase em japonês, percentual e legenda. */
 export function ResultCard({ icon, jp, label, percent, caption }: ResultCardProps) {
   return (
-    <div className="animate-scale-in">
+    <div className="motion-safe:animate-scale-in">
       <Surface tone="dark" glow className="flex flex-col items-center px-4 py-6 text-center">
         <IconBadge icon={icon} className="mb-3" />
         <Eyebrow tone="accent">
-          {jp} · {label}
+          <span lang="ja" className="font-jp">
+            {jp}
+          </span>{" "}
+          · {label}
         </Eyebrow>
-        <p className="mb-1.5 mt-2 text-[48px] font-extrabold leading-none tracking-tighter text-white">
+        <p className="mb-1.5 mt-2 font-display text-[48px] font-black leading-none tracking-tighter text-white">
           {percent}
-          <span className="text-[0.55em] text-primary">%</span>
+          <span className="text-[0.55em] text-journey-orange">%</span>
         </p>
         <Eyebrow tone="onDark">{caption}</Eyebrow>
       </Surface>
@@ -227,44 +188,52 @@ export function ResultCard({ icon, jp, label, percent, caption }: ResultCardProp
   );
 }
 
-/** Mini cartão com a nota de uma etapa (tela de conclusão). */
+/** Nota de uma etapa na tela de conclusão. */
 export function ScoreTile({ jp, label, score }: { jp: string; label: string; score: number }) {
   return (
-    <Surface tone="dark" className="px-4 py-4 text-center">
-      <Eyebrow tone="accent">{jp}</Eyebrow>
-      <p className="mb-0.5 mt-2 text-[40px] font-extrabold leading-none tracking-tighter text-white">
+    <div className="rounded-2xl border-2 border-white/15 bg-black/30 px-4 py-4 text-center">
+      <Eyebrow tone="accent">
+        <span lang="ja" className="font-jp">
+          {jp}
+        </span>
+      </Eyebrow>
+      <p className="mb-0.5 mt-2 font-display text-[40px] font-black leading-none tracking-tighter text-white">
         {score}
-        <span className="text-2xl text-primary">%</span>
+        <span className="text-2xl text-journey-orange">%</span>
       </p>
       <Eyebrow tone="onDark" className="mt-1.5">
         {label}
       </Eyebrow>
-    </Surface>
+    </div>
   );
 }
 
 /* ---------- Layout ---------- */
 
-export function LessonStack({ className, children }: { className?: string; children: ReactNode }) {
-  return (
-    <div className={cx("flex animate-fade-in-up flex-col gap-4 px-5 pb-6", className)}>{children}</div>
-  );
+/** `animated: false` quando o próprio conteúdo já anima (a carta da Leitura entra a cada palavra). */
+export function LessonStack({ className, animated = true, children }: { className?: string; animated?: boolean; children: ReactNode }) {
+  return <div className={cx("flex flex-col gap-4 pb-6", animated && "motion-safe:animate-fade-in-up", className)}>{children}</div>;
 }
 
+/** Abertura de cada etapa. O título recebe o foco na troca de etapa (o leitor de tela anuncia). */
 export function ExerciseHeader({
   eyebrow,
   title,
   description,
+  headingRef,
 }: {
   eyebrow: string;
   title: string;
   description: string;
+  headingRef?: Ref<HTMLHeadingElement>;
 }) {
   return (
-    <div className="mb-5 px-5">
+    <div className="mb-5">
       <Eyebrow tone="primary">{eyebrow}</Eyebrow>
-      <h3 className="mb-1 mt-1.5 text-[28px] font-extrabold leading-[1.05] tracking-tight">{title}</h3>
-      <p className="m-0 text-sm text-muted-foreground">{description}</p>
+      <h2 ref={headingRef} tabIndex={-1} className="mb-1 mt-1.5 scroll-mt-40 font-display text-[28px] font-black leading-[1.05] tracking-[-0.03em] text-journey-ink outline-none">
+        {title}
+      </h2>
+      <p className="m-0 text-sm font-semibold text-journey-ink/75">{description}</p>
     </div>
   );
 }

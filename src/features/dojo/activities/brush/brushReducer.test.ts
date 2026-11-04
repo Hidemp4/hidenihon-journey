@@ -82,18 +82,26 @@ describe("Pincel: De memória", () => {
   it("aceita qualquer traço (menos toque), confere encaixando no modelo e grava a autoavaliação", () => {
     let state = startBrush("recall");
     expect(draw(state, [{ x: 1, y: 1 }])).toBe(state);
-    // Desenho certo, mas pequeno e no canto: o encaixe corrige antes da nota.
+    // Desenho quase certo, pequeno e no canto: o encaixe corrige tamanho e posição antes da nota.
     state = draw(state, line(10, 17, 44, 17), line(5, 40, 49, 40));
     expect(sessionOf(state).feedback).toBeNull();
     expect(run(state, { type: "GRADE", cardKey: keyOf(state), grade: "good" })).toBe(state);
 
     state = run(state, { type: "CHECK", cardKey: keyOf(state) });
     expect(sessionOf(state).phase).toBe("checked");
-    expect(sessionOf(state).score?.score).toBeGreaterThanOrEqual(95);
+    // Não é a metade exata do modelo (meia unidade fora): nota alta, mas a nota não tem folga.
+    expect(sessionOf(state).score?.score).toBeGreaterThanOrEqual(85);
+    expect(sessionOf(state).score?.score).toBeLessThan(100);
     expect(run(state, { type: "STROKE", cardKey: keyOf(state), points: TOP })).toBe(state);
 
     state = run(state, { type: "GRADE", cardKey: keyOf(state), grade: "almost" });
     expect(sessionOf(state).attempts[0]).toMatchObject({ grade: "almost", outcome: "correct" });
+  });
+
+  it("a metade exata do modelo, encaixada, é idêntica: 100", () => {
+    let state = draw(startBrush("recall"), line(10, 17.5, 44.5, 17.5), line(5, 40, 49.5, 40));
+    state = run(state, { type: "CHECK", cardKey: keyOf(state) });
+    expect(sessionOf(state).score).toMatchObject({ score: 100, error: 0 });
   });
 
   it("conferir sem desenhar vale (só teclado) e 'Errei' grava erro", () => {

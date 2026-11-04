@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { ArrowRight } from "lucide-react";
 import type { ReadingWord } from "@/data/hiragana";
 import { Button, Eyebrow, LessonStack, ResultCard, SegmentedProgress, SkipButton, Surface } from "./ui";
-import { JP_FONT, cx, getResultTone, scorePercent, useFinishOnce } from "./lessonKit";
+import { cx, getResultTone, scorePercent, useFinishOnce } from "./lessonKit";
 
 interface ReadingLessonProps {
   words: ReadingWord[];
@@ -75,29 +75,29 @@ export default function ReadingLesson({ words, canSkip = false, onComplete }: Re
     const tone = getResultTone(percent);
     return (
       <LessonStack className="gap-5">
-        <ResultCard
-          icon={tone.Icon}
-          jp={tone.jp}
-          label={tone.label}
-          percent={percent}
-          caption={`Você leu ${correctCount}/${words.length} palavras`}
-        />
+        <ResultCard icon={tone.Icon} jp={tone.jp} label={tone.label} percent={percent} caption={`Você leu ${correctCount}/${words.length} palavras`} />
 
         <div className="flex flex-col gap-2">
           <Eyebrow className="mx-1 mb-0.5">Palavras da lição</Eyebrow>
-          {words.map((w, i) => (
-            <Surface key={i} className="flex items-center gap-3.5 px-4 py-3">
-              <span className="grid h-[46px] w-[46px] shrink-0 place-items-center rounded-full border border-border bg-white text-2xl">
-                {w.emoji}
-              </span>
-              <div className="min-w-0">
-                <p className={cx("m-0 text-[22px] font-bold leading-[1.1]", JP_FONT)}>{w.word}</p>
-                <p className="mb-0 mt-1 text-xs text-muted-foreground">
-                  <span className="font-extrabold text-primary">{w.romaji}</span> • {w.meaning}
-                </p>
-              </div>
-            </Surface>
-          ))}
+          <ul className="flex flex-col gap-2">
+            {words.map((w, i) => (
+              <li key={i}>
+                <Surface className="flex items-center gap-3.5 px-4 py-3">
+                  <span aria-hidden="true" className="grid h-[46px] w-[46px] shrink-0 place-items-center rounded-xl border-2 border-journey-wood/15 bg-journey-sand text-2xl">
+                    {w.emoji}
+                  </span>
+                  <div className="min-w-0">
+                    <p lang="ja" className="m-0 font-jp text-[22px] font-black leading-[1.1] text-journey-ink">
+                      {w.word}
+                    </p>
+                    <p className="mb-0 mt-1 text-xs font-semibold text-journey-ink/75">
+                      <span className="font-black text-journey-ink">{w.romaji}</span> · {w.meaning}
+                    </p>
+                  </div>
+                </Surface>
+              </li>
+            ))}
+          </ul>
         </div>
       </LessonStack>
     );
@@ -105,7 +105,7 @@ export default function ReadingLesson({ words, canSkip = false, onComplete }: Re
 
   /* ---------- Exercício ---------- */
   return (
-    <LessonStack className="animate-none">
+    <LessonStack animated={false}>
       <SegmentedProgress total={words.length} current={currentIndex} />
 
       <div className="flex items-center justify-between gap-3 px-1">
@@ -119,16 +119,17 @@ export default function ReadingLesson({ words, canSkip = false, onComplete }: Re
         key={currentIndex}
         tone="dark"
         glow={revealed}
-        rootClassName="animate-scale-in"
+        rootClassName="motion-safe:animate-scale-in"
         className="flex min-h-[320px] flex-col items-center justify-center gap-4 p-8"
       >
-        <div className={cx("text-center text-[60px] font-bold leading-[1.1]", JP_FONT)}>
+        <div lang="ja" className="text-center font-jp text-[60px] font-black leading-[1.1] text-white [text-shadow:0_3px_0_hsl(var(--journey-forest-deep)/.6)]">
           {currentWord.word}
         </div>
 
         <div
+          aria-hidden="true"
           className={cx(
-            "text-[68px] leading-none transition-all duration-500",
+            "text-[68px] leading-none motion-safe:transition-all motion-safe:duration-500",
             revealed ? "scale-100 opacity-100" : "scale-[0.6] opacity-0"
           )}
         >
@@ -136,45 +137,42 @@ export default function ReadingLesson({ words, canSkip = false, onComplete }: Re
         </div>
 
         {revealed && (
-          <Eyebrow tone="accent" size="md" className="animate-fade-in-up">
+          <Eyebrow tone="accent" size="md" className="motion-safe:animate-fade-in-up">
             {currentWord.meaning}
           </Eyebrow>
         )}
 
         <div
           className={cx(
-            "transition-all duration-500",
+            "motion-safe:transition-all motion-safe:duration-500",
             phase === "romaji" ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0"
           )}
+          aria-hidden={phase !== "romaji"}
         >
-          <div className="rounded-full bg-primary px-6 py-2.5 text-2xl font-extrabold tracking-tight text-primary-foreground shadow-[0_10px_24px_hsl(var(--primary)/0.4)]">
+          <div className="rounded-2xl border-2 border-journey-gold/60 bg-journey-orange px-6 py-2.5 font-display text-2xl font-black tracking-tight text-white shadow-[0_5px_0_hsl(var(--journey-orange)/.45)]">
             {currentWord.romaji}
           </div>
         </div>
       </Surface>
 
+      {/* Região live sempre montada: anuncia o significado e depois a leitura, quando aparecem. */}
+      <p className="sr-only" role="status" aria-live="polite">
+        {phase === "image" ? `Significado: ${currentWord.meaning}.` : phase === "romaji" ? `Leitura: ${currentWord.romaji}.` : ""}
+      </p>
+
       {phase === "image" && (
-        <div className="flex animate-fade-in-up flex-col items-center gap-2">
+        <div className="flex flex-col items-center gap-2 motion-safe:animate-fade-in-up">
           <Eyebrow>Tente ler em japonês</Eyebrow>
-          <div className="flex gap-1.5">
+          <div aria-hidden="true" className="flex gap-1.5">
             {[0, 1, 2].map((i) => (
-              <div
-                key={i}
-                className="h-2 w-2 rounded-full bg-primary"
-                style={{ animation: `pulse 1.2s ease-in-out ${i * 0.4}s infinite` }}
-              />
+              <div key={i} className="h-2 w-2 rounded-full bg-journey-orange motion-safe:animate-pulse" style={{ animationDelay: `${i * 0.4}s` }} />
             ))}
           </div>
         </div>
       )}
 
       {phase === "romaji" && (
-        <Button
-          iconRight={ArrowRight}
-          onClick={handleNext}
-          disabled={advancingRef.current}
-          className="animate-fade-in-up"
-        >
+        <Button iconRight={ArrowRight} onClick={handleNext} disabled={advancingRef.current} className="motion-safe:animate-fade-in-up">
           {currentIndex < words.length - 1 ? "Próxima palavra" : "Concluir lição"}
         </Button>
       )}

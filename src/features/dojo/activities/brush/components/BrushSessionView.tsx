@@ -13,6 +13,9 @@ import type { StudyItem } from "@/features/dojo/shared/studyItem";
 /** Folga depois do último traço antes de trocar a animação pelo guia. */
 const ANIMATION_TAIL_MS = 400;
 
+/** A nota é rígida de propósito: avisar evita estranhar um 80 num traço que parece perfeito. */
+const STRICT_SCORE_HINT = "A nota não tem folga: 100 só com o traço idêntico ao modelo."
+
 const toolClass =
   "inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl border-2 border-journey-wood/15 bg-white px-3 text-xs font-black text-journey-ink transition hover:border-journey-orange/40 disabled:cursor-not-allowed disabled:opacity-50";
 const primaryClass =
@@ -168,6 +171,7 @@ function CardView({ session, card, reduceMotion, hintId, onStroke, onUndo, onCle
         <p className="text-sm font-black text-journey-ink">
           Nota {session.score?.score ?? 0} · {session.corrections === 0 ? "sem correções" : `${session.corrections} ${session.corrections === 1 ? "correção" : "correções"}`}
         </p>
+        <p className="mt-1 text-[11px] font-semibold text-journey-ink/75">{STRICT_SCORE_HINT}</p>
         <button ref={actionRef} type="button" className={`${primaryClass} mt-3 w-full`} onClick={onNext} aria-keyshortcuts="Enter">
           Próximo (Enter)
         </button>
@@ -180,6 +184,7 @@ function CardView({ session, card, reduceMotion, hintId, onStroke, onUndo, onCle
           Nota automática {session.score?.score ?? 0} de 100 · {session.score?.strokeCount ?? 0} de {card.glyph.strokes.length} traços
         </p>
         <p className="mt-1 text-center text-xs font-semibold text-journey-ink/75">Compare com o modelo em laranja e diga como foi.</p>
+        <p className="mt-1 text-center text-[11px] font-semibold text-journey-ink/75">{STRICT_SCORE_HINT}</p>
         <div role="group" aria-label="Como foi?" className="mt-3 grid grid-cols-3 gap-2">
           {SELF_GRADE_OPTIONS.map((option) => (
             <button

@@ -3,14 +3,20 @@ import { ArrowRight, Lightbulb, Volume2 } from "lucide-react";
 import type { JapaneseChar } from "@/data/hiragana";
 import StrokeOrderAnimation from "@/components/StrokeOrderAnimation";
 import { Button, Eyebrow, LessonStack, SegmentedProgress, Surface } from "./ui";
-import { JP_FONT, cx } from "./lessonKit";
+
+/** Letras (kana/kanji) ou itens (frases do Japonês na Prática). */
+const UNITS = {
+  letter: { label: "Letra", next: "Próxima letra" },
+  item: { label: "Item", next: "Próximo item" },
+} as const;
 
 interface IntroductionLessonProps {
   chars: JapaneseChar[];
+  unit?: keyof typeof UNITS;
   onComplete: () => void;
 }
 
-export default function IntroductionLesson({ chars, onComplete }: IntroductionLessonProps) {
+export default function IntroductionLesson({ chars, unit = "letter", onComplete }: IntroductionLessonProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const current = chars[currentIndex];
   const hasNext = currentIndex < chars.length - 1;
@@ -26,31 +32,42 @@ export default function IntroductionLesson({ chars, onComplete }: IntroductionLe
     window.speechSynthesis.speak(utter);
   };
 
+  // Palavras (Japonês na Prática) não cabem no tamanho de uma letra só.
+  const long = Array.from(current.char).length > 1;
+
   return (
     <LessonStack>
       <SegmentedProgress total={chars.length} current={currentIndex} dots />
 
-      <Surface tone="dark" glow className="flex flex-col items-center gap-3.5 px-5 pb-7 pt-5">
-        <Eyebrow tone="accent">
-          Letra {currentIndex + 1} de {chars.length}
-        </Eyebrow>
-        <div
-          key={current.char}
-          className={cx(
-            "grid h-[168px] w-[168px] animate-scale-in place-items-center rounded-full border-[1.5px] border-[hsl(var(--surface-foreground)/0.14)] bg-[hsl(var(--surface-foreground)/0.05)] text-[108px] leading-none",
-            JP_FONT
-          )}
-        >
-          {current.char}
+      {/* O caractere no palco: moldura floresta, papel por dentro (como as cartas do Dojô). */}
+      <Surface tone="dark" className="p-2.5 sm:p-3">
+        <div className="rounded-[1.5rem] bg-journey-sand p-4">
+          <div className="flex items-center justify-between gap-3">
+            <Eyebrow tone="muted">
+              {UNITS[unit].label} {currentIndex + 1} de {chars.length}
+            </Eyebrow>
+            {current.strokeCount > 0 && (
+              <span className="rounded-full bg-white px-3 py-1 text-[11px] font-black uppercase tracking-[0.12em] text-journey-wood">
+                {current.strokeCount} traço{current.strokeCount !== 1 ? "s" : ""}
+              </span>
+            )}
+          </div>
+          <div
+            key={current.char}
+            lang="ja"
+            className={`mt-3 grid min-h-48 place-items-center rounded-[1.25rem] border-2 border-journey-wood/15 bg-white px-3 font-jp font-black leading-none text-journey-ink shadow-[0_5px_0_hsl(var(--journey-wood)/.12)] motion-safe:animate-scale-in ${
+              long ? "text-6xl" : "text-[7rem]"
+            }`}
+          >
+            {current.char}
+          </div>
         </div>
       </Surface>
 
       <div className="grid grid-cols-2 gap-3">
-        <Surface className="flex flex-col items-center justify-between gap-2.5 p-4">
+        <Surface className="flex flex-col items-center justify-between gap-3 p-4 text-center">
           <Eyebrow>Romaji</Eyebrow>
-          <span className="text-[46px] font-extrabold leading-none tracking-tighter text-primary">
-            {current.romaji}
-          </span>
+          <span className="break-all font-display text-[40px] font-black leading-none tracking-tighter text-journey-orange">{current.romaji}</span>
           <Button variant="dark" size="sm" iconLeft={Volume2} onClick={playAudio}>
             Ouvir
           </Button>
@@ -58,32 +75,23 @@ export default function IntroductionLesson({ chars, onComplete }: IntroductionLe
 
         <Surface className="flex flex-col items-center gap-2 p-3.5">
           <Eyebrow>Traços</Eyebrow>
-          {/* Fundo branco para a animação ficar legível, independente da cor do traço */}
-          <div className="rounded-[20px] border border-border bg-white p-1">
-            <StrokeOrderAnimation char={current.char} size={90} autoPlay loop />
-          </div>
-          <span className="text-xs font-bold text-muted-foreground">
-            {current.strokeCount} traço{current.strokeCount !== 1 ? "s" : ""}
-          </span>
+          <StrokeOrderAnimation char={current.char} size={90} autoPlay loop />
         </Surface>
       </div>
 
-      <div className="flex items-start gap-3 rounded-3xl border border-[hsl(var(--accent)/0.45)] bg-[hsl(var(--accent)/0.2)] px-4 py-3.5 text-sm leading-snug">
-        <span
-          aria-hidden
-          className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-accent text-[hsl(var(--surface))]"
-        >
+      <div className="flex items-start gap-3 rounded-2xl border-2 border-journey-gold/60 bg-journey-gold/15 px-4 py-3.5 text-sm font-semibold leading-snug text-journey-ink">
+        <span aria-hidden className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-journey-gold text-journey-ink">
           <Lightbulb size={15} strokeWidth={2.6} />
         </span>
         <p className="m-0">
-          <strong>Dica: </strong>
-          observe a animação dos traços. A escrita japonesa segue a ordem{" "}
-          <strong>esquerda → direita</strong> e <strong>cima → baixo</strong>.
+          <strong className="font-black">Dica: </strong>
+          observe a animação dos traços. A escrita japonesa segue a ordem <strong className="font-black">esquerda → direita</strong> e{" "}
+          <strong className="font-black">cima → baixo</strong>.
         </p>
       </div>
 
       <Button iconRight={ArrowRight} onClick={handleNext}>
-        {hasNext ? "Próxima letra" : "Ir para exercícios"}
+        {hasNext ? UNITS[unit].next : "Ir para exercícios"}
       </Button>
     </LessonStack>
   );

@@ -1,14 +1,6 @@
-import { useState, type ReactNode } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import {
-  ArrowLeft,
-  BookMarked,
-  BookOpen,
-  CheckCircle2,
-  Lock,
-  Target,
-  type LucideIcon,
-} from "lucide-react";
+import { useMemo, type ReactNode } from "react";
+import { Construction, Lock } from "lucide-react";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import { hiraganaGroups, allHiragana } from "@/data/hiragana";
 import { katakanaGroups, allKatakana } from "@/data/katakana";
 import { kanjiGroups, allKanji } from "@/data/kanji";
@@ -17,394 +9,211 @@ import type { JapaneseChar, LessonGroup } from "@/data/hiragana";
 import type { ModuleType } from "@/hooks/useProgress";
 import { useProgress } from "@/hooks/useProgress";
 import { MODULE_LIST, type ModuleMeta } from "@/data/modules";
-
-type LessonStep = "intro" | "identification" | "reading";
+import { MISSION_ART } from "@/components/home/art";
+import { FloatingLearningNav } from "@/components/navigation/FloatingLearningNav";
+import { LessonTrail, NextLessonPanel, SectionSwitcher, TrailHeading, type SectionOption } from "@/components/module/LessonTrail";
+import { ModuleHero } from "@/components/module/ModuleHero";
+import { buildTrail, nextLesson, parseKanaSection, summarizeTrail, type KanaSectionId, type TrailLesson } from "@/components/module/lessonTrail";
+import { Panel, StatTile } from "@/features/dojo/shared/components/ui";
 
 interface KanaSection {
-  id: string;
+  id: KanaSectionId;
   label: string;
   sublabel: string;
-  emoji: string;
-  colorVar: string;
-  bgVar: string;
+  glyph: string;
   groups: LessonGroup[];
   allChars: JapaneseChar[];
 }
 
-const KANA_SECTIONS: KanaSection[] = [
-  {
-    id: "hiragana",
-    label: "Hiragana",
-    sublabel: "ひらがな",
-    emoji: "あ",
-    colorVar: "--hiragana",
-    bgVar: "--hiragana-bg",
-    groups: hiraganaGroups,
-    allChars: allHiragana,
-  },
-  {
-    id: "katakana",
-    label: "Katakana",
-    sublabel: "カタカナ",
-    emoji: "ア",
-    colorVar: "--katakana",
-    bgVar: "--katakana-bg",
-    groups: katakanaGroups,
-    allChars: allKatakana,
-  },
-  {
-    id: "kanji",
-    label: "Kanji",
-    sublabel: "漢字",
-    emoji: "漢",
-    colorVar: "--kanji",
-    bgVar: "--kanji-bg",
-    groups: kanjiGroups,
-    allChars: allKanji,
-  },
+const KANA_SECTIONS: readonly KanaSection[] = [
+  { id: "hiragana", label: "Hiragana", sublabel: "ひらがな", glyph: "あ", groups: hiraganaGroups, allChars: allHiragana },
+  { id: "katakana", label: "Katakana", sublabel: "カタカナ", glyph: "ア", groups: katakanaGroups, allChars: allKatakana },
+  { id: "kanji", label: "Kanji", sublabel: "漢字", glyph: "漢", groups: kanjiGroups, allChars: allKanji },
 ];
 
-const LESSON_STEPS: Array<{ id: LessonStep; label: string; Icon: LucideIcon }> = [
-  { id: "intro", label: "Introdução", Icon: BookOpen },
-  { id: "identification", label: "Identificação", Icon: Target },
-  { id: "reading", label: "Leitura", Icon: BookMarked },
-];
+const kanaScopedId = (section: KanaSectionId) => (group: LessonGroup) => `${section}__${group.id}`;
+const practicaScopedId = (group: LessonGroup) => `pratica__${group.id}`;
 
-const hslVar = (name: string, alpha?: number) => `hsl(var(${name})${alpha === undefined ? "" : ` / ${alpha}`})`;
+const plural = (count: number, one: string, many: string) => `${count} ${count === 1 ? one : many}`;
 
-type ModuleHeaderProps = {
-  moduleMeta: ModuleMeta;
-  color: string;
-  onBack: () => void;
-  children?: ReactNode;
-};
-
-type LessonCardProps = {
-  title: string;
-  details: string;
-  lessonIndex: number;
-  completed: boolean;
-  unlocked: boolean;
-  score: number;
-  color: string;
-  bg: string;
-  stepColorVar: string;
-  onOpen: () => void;
-};
-
-type LessonListConfig = {
-  groups: LessonGroup[];
-  summary: string;
-  color: string;
-  bg: string;
-  stepColorVar: string;
-  getScopedId: (group: LessonGroup) => string;
-  getDetails: (group: LessonGroup) => string;
-};
-
-function ModuleHeader({ moduleMeta, color, onBack, children }: ModuleHeaderProps) {
+/** Casca comum das telas de módulo: cena da missão no topo, conteúdo no papel da Trilha, menu flutuante. */
+function ModuleShell({ moduleMeta, stats, children }: { moduleMeta: ModuleMeta; stats?: ReactNode; children: ReactNode }) {
+  const index = Math.max(0, MODULE_LIST.findIndex((module) => module.id === moduleMeta.id));
   return (
-    <div
-      className="sticky top-0 z-10 px-4 py-4"
-      style={{ background: "hsl(var(--background))", borderBottom: "1px solid hsl(var(--border))" }}
-    >
-      <div className={`flex items-center gap-3 ${children ? "mb-3" : ""}`}>
-        <button
-          onClick={onBack}
-          className="rounded-xl border p-2 transition-all active:scale-95"
-          style={{ background: "hsl(var(--card))", borderColor: "hsl(var(--border))" }}
-        >
-          <ArrowLeft size={20} />
-        </button>
-        <div className="flex items-center gap-2">
-          <span className="text-3xl font-jp" style={{ color }}>
-            {moduleMeta.emoji}
-          </span>
-          <div>
-            <h1 className="text-lg font-bold">{moduleMeta.label}</h1>
-            <p className="text-xs text-muted-foreground">{moduleMeta.sublabel}</p>
-          </div>
-        </div>
-      </div>
-      {children}
+    <div className="journey-home min-h-screen min-h-[100dvh] bg-journey-surface pb-28 font-ui text-journey-ink">
+      <ModuleHero moduleMeta={moduleMeta} missionNumber={index + 1} art={MISSION_ART[index % MISSION_ART.length]} stats={stats} />
+      <main className="relative mx-auto max-w-3xl px-5 pt-8 sm:px-8">{children}</main>
+      <FloatingLearningNav />
     </div>
   );
 }
 
-function LessonCard({
-  title,
-  details,
-  lessonIndex,
-  completed,
-  unlocked,
-  score,
-  color,
-  bg,
-  stepColorVar,
-  onOpen,
-}: LessonCardProps) {
+function ModuleStats({ lessons, chars, charsLabel = "Caracteres", percent }: { lessons: string; chars: string; charsLabel?: string; percent: number }) {
   return (
-    <button
-      onClick={onOpen}
-      disabled={!unlocked}
-      className="w-full rounded-2xl border p-4 text-left shadow-sm transition-all active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
-      style={{
-        background: completed ? `linear-gradient(135deg, ${bg}, hsl(var(--card)))` : "hsl(var(--card))",
-        borderColor: completed ? color : "hsl(var(--border))",
-      }}
+    <div role="group" aria-label="Progresso do módulo" className="grid grid-cols-3 gap-2">
+      <StatTile label="Lições" value={lessons} />
+      <StatTile label={charsLabel} value={chars} />
+      <StatTile label="Progresso" value={`${percent}%`} />
+    </div>
+  );
+}
+
+function BackToTrail() {
+  return (
+    <Link
+      to="/home"
+      className="mt-6 inline-flex min-h-12 w-full items-center justify-center rounded-2xl border-2 border-journey-wood/20 bg-white px-6 text-sm font-black text-journey-ink outline-none transition hover:border-journey-orange/40 focus-visible:ring-4 focus-visible:ring-journey-orange/40"
     >
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div
-            className="rounded-xl w-10 h-10 flex items-center justify-center text-sm font-bold"
-            style={{
-              background: completed ? color : unlocked ? bg : "hsl(var(--muted))",
-              color: completed ? "white" : unlocked ? color : "hsl(var(--muted-foreground))",
-              border: unlocked && !completed ? `1px solid ${color}` : "1px solid transparent",
-            }}
-          >
-            {completed ? <CheckCircle2 size={18} /> : unlocked ? lessonIndex + 1 : <Lock size={16} />}
+      Ver outras missões
+    </Link>
+  );
+}
+
+/** Módulo bloqueado ou ainda em construção: o que vem nele e por que não dá para entrar. */
+function UnavailableModule({ moduleMeta }: { moduleMeta: ModuleMeta }) {
+  const locked = Boolean(moduleMeta.locked);
+  return (
+    <ModuleShell moduleMeta={moduleMeta}>
+      <Panel>
+        <div className="flex items-start gap-4">
+          <div aria-hidden="true" className="grid h-14 w-14 shrink-0 place-items-center rounded-xl border-2 border-[hsl(var(--journey-wood-deep))] bg-journey-forest-deep text-journey-gold">
+            {locked ? <Lock size={24} /> : <Construction size={24} />}
           </div>
           <div>
-            <p className="font-semibold text-sm">{title}</p>
-            <p className="text-xs text-muted-foreground">{details}</p>
+            <h2 className="font-display text-xl font-black text-journey-ink">{locked ? "Missão bloqueada" : "Em construção"}</h2>
+            <p className="mt-1 text-sm font-semibold text-journey-ink/75">
+              {locked ? `Complete as missões anteriores para liberar ${moduleMeta.label}.` : "Este módulo estará disponível em breve. Complete os módulos anteriores primeiro!"}
+            </p>
           </div>
         </div>
 
-        {completed && (
-          <span
-            className="text-xs font-bold px-2 py-1 rounded-lg"
-            style={{
-              background: score >= 80 ? "hsl(var(--success) / 0.15)" : "hsl(var(--warning) / 0.15)",
-              color: score >= 80 ? "hsl(var(--success))" : "hsl(var(--foreground))",
-            }}
-          >
-            {score}%
-          </span>
-        )}
-      </div>
-
-      {unlocked && (
-        <div className="flex gap-2 mt-3">
-          {LESSON_STEPS.map(({ id, label, Icon }) => (
-            <div
-              key={id}
-              className="flex items-center gap-1 rounded-lg px-2 py-1 text-xs"
-              style={{
-                background: completed ? hslVar(stepColorVar, 0.16) : "hsl(var(--muted))",
-                color: completed ? color : "hsl(var(--foreground))",
-                border: completed ? `1px solid ${hslVar(stepColorVar, 0.28)}` : "1px solid hsl(var(--border))",
-              }}
-            >
-              <Icon size={16} />
-              {label}
-            </div>
+        <h3 className="mt-6 text-[11px] font-black uppercase tracking-[0.14em] text-journey-wood">Conteúdo da missão</h3>
+        <ol className="mt-3 flex flex-col gap-2">
+          {moduleMeta.topics.map((topic, index) => (
+            <li key={topic} className="flex items-center gap-3 rounded-xl bg-journey-sand/70 px-3 py-2 text-sm font-bold text-journey-ink">
+              <span aria-hidden="true" className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-journey-forest-deep text-xs font-black text-journey-gold">
+                {index + 1}
+              </span>
+              {topic}
+            </li>
           ))}
-        </div>
-      )}
-    </button>
+        </ol>
+        <BackToTrail />
+      </Panel>
+    </ModuleShell>
   );
 }
 
 export default function ModulePage() {
   const { module } = useParams<{ module: string }>();
-  const navigate = useNavigate();
-  const { getLessonProgress, isLessonUnlocked } = useProgress();
-  const [activeSection, setActiveSection] = useState(KANA_SECTIONS[0].id);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { progress, getLessonProgress, isLessonUnlocked, getModulePercent } = useProgress();
 
-  const moduleMeta = MODULE_LIST.find(m => m.id === module);
-  if (!moduleMeta) return null;
+  const moduleMeta = MODULE_LIST.find((m) => m.id === module);
+  const moduleId = moduleMeta?.id as ModuleType | undefined;
+  const activeSection = parseKanaSection(searchParams.get("secao"));
 
-  const moduleId = moduleMeta.id as ModuleType;
-  const moduleColor = hslVar(moduleMeta.colorVar);
+  const kanaTrails = useMemo(
+    () =>
+      KANA_SECTIONS.map((section) =>
+        buildTrail({
+          groups: section.groups,
+          getScopedId: kanaScopedId(section.id),
+          getProgress: (scopedId) => getLessonProgress("kana", scopedId),
+          isUnlocked: (index, ids) => isLessonUnlocked("kana", index, ids),
+        })
+      ),
+    [getLessonProgress, isLessonUnlocked]
+  );
 
-  if (moduleMeta.locked) {
-    return (
-      <div className="min-h-screen flex flex-col" style={{ background: "hsl(var(--background))" }}>
-        <ModuleHeader moduleMeta={moduleMeta} color={moduleColor} onBack={() => navigate("/home")} />
+  if (!moduleMeta || !moduleId) return null;
+  if (moduleMeta.locked || (moduleId !== "kana" && moduleId !== "japones-pratica")) return <UnavailableModule moduleMeta={moduleMeta} />;
 
-        <div className="flex-1 flex flex-col items-center justify-center gap-6 px-6 py-12 max-w-lg mx-auto w-full text-center">
-          <div
-            className="w-24 h-24 rounded-full flex items-center justify-center text-4xl font-jp"
-            style={{ background: hslVar(moduleMeta.bgVar), color: moduleColor }}
-          >
-            <Lock size={34} />
-          </div>
-          <div>
-            <h2 className="text-2xl font-bold mb-2">Módulo bloqueado</h2>
-            <p className="text-muted-foreground text-sm mb-4">Complete os módulos anteriores para liberar {moduleMeta.label}.</p>
-          </div>
-
-          <button
-            onClick={() => navigate("/home")}
-            className="w-full rounded-2xl py-3 font-semibold transition-all active:scale-95"
-            style={{ background: "hsl(var(--muted))", color: "hsl(var(--foreground))" }}
-          >
-            Voltar ao início
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  const renderLessonList = ({
-    groups,
-    summary,
-    color,
-    bg,
-    stepColorVar,
-    getScopedId,
-    getDetails,
-  }: LessonListConfig) => {
-    const lessonIds = groups.map(getScopedId);
-
-    return (
-      <div className="px-4 py-5 flex flex-col gap-3 max-w-lg mx-auto">
-        <p className="text-xs font-medium text-muted-foreground">{summary}</p>
-        {groups.map((group, index) => {
-        const scopedId = getScopedId(group);
-        const lessonProgress = getLessonProgress(moduleId, scopedId);
-        const unlocked = isLessonUnlocked(moduleId, index, lessonIds);
-        const completed = lessonProgress?.completed ?? false;
-        const score = lessonProgress?.score ?? 0;
-
-        return (
-          <LessonCard
-            key={group.id}
-            title={group.title}
-            details={getDetails(group)}
-            lessonIndex={index}
-            completed={completed}
-            unlocked={unlocked}
-            score={score}
-            color={color}
-            bg={bg}
-            stepColorVar={stepColorVar}
-            onOpen={() => {
-              if (unlocked) navigate(`/module/${moduleId}/lesson/${scopedId}`);
-            }}
-          />
-        );
-        })}
-      </div>
-    );
-  };
+  const lessonHref = (lesson: TrailLesson) => `/module/${moduleId}/lesson/${lesson.scopedId}`;
+  const moduleProgress = progress[moduleId];
 
   if (moduleId === "kana") {
-    const section = KANA_SECTIONS.find(s => s.id === activeSection) ?? KANA_SECTIONS[0];
-    const color = hslVar(section.colorVar);
-    const bg = hslVar(section.bgVar);
+    const sectionIndex = KANA_SECTIONS.findIndex((section) => section.id === activeSection);
+    const section = KANA_SECTIONS[sectionIndex];
+    const trail = kanaTrails[sectionIndex];
+    const summary = summarizeTrail(trail);
+    const next = nextLesson(trail);
+    const totals = kanaTrails.map(summarizeTrail).reduce((sum, item) => ({ completed: sum.completed + item.completed, total: sum.total + item.total }), { completed: 0, total: 0 });
+    const options: SectionOption[] = KANA_SECTIONS.map((item, index) => ({ id: item.id, label: item.label, glyph: item.glyph, summary: summarizeTrail(kanaTrails[index]) }));
+    const details = (lesson: TrailLesson) => `${plural(lesson.group.chars.length, "caractere", "caracteres")} · 3 etapas`;
 
     return (
-      <div className="min-h-screen" style={{ background: "hsl(var(--background))" }}>
-        <ModuleHeader moduleMeta={moduleMeta} color={moduleColor} onBack={() => navigate("/home")}>
-          <div className="flex gap-2 rounded-2xl border bg-card p-1 shadow-sm" style={{ borderColor: "hsl(var(--border))" }}>
-            {KANA_SECTIONS.map(s => {
-              const isActive = s.id === activeSection;
-              return (
-                <button
-                  key={s.id}
-                  onClick={() => setActiveSection(s.id)}
-                  className="flex-1 rounded-xl border py-2 text-sm font-bold transition-all active:scale-95"
-                  style={{
-                    background: isActive ? hslVar(s.colorVar) : "hsl(var(--muted))",
-                    borderColor: isActive ? hslVar(s.colorVar) : "hsl(var(--border))",
-                    color: isActive ? "hsl(var(--primary-foreground))" : "hsl(var(--foreground))",
-                    boxShadow: isActive ? `0 8px 18px ${hslVar(s.colorVar, 0.22)}` : "none",
-                  }}
-                >
-                  <span className="font-jp mr-1">{s.emoji}</span>
-                  {s.label}
-                </button>
-              );
-            })}
-          </div>
-        </ModuleHeader>
+      <ModuleShell
+        moduleMeta={moduleMeta}
+        stats={
+          <ModuleStats
+            lessons={`${totals.completed}/${totals.total}`}
+            chars={`${moduleProgress?.learnedChars ?? 0}/${moduleProgress?.totalChars ?? 0}`}
+            percent={getModulePercent("kana")}
+          />
+        }
+      >
+        <SectionSwitcher
+          sections={options}
+          active={section.id}
+          // `replace`: trocar de aba não enche o histórico (o "voltar" do celular sai do módulo).
+          onSelect={(id) => setSearchParams({ secao: id }, { replace: true })}
+        />
 
-        {renderLessonList({
-          groups: section.groups,
-          summary: `${section.groups.length} lições · ${section.allChars.length} caracteres`,
-          color,
-          bg,
-          stepColorVar: section.colorVar,
-          getScopedId: group => `${section.id}__${group.id}`,
-          getDetails: group => `${group.chars.length} caracteres · 3 exercícios`,
-        })}
-      </div>
+        <div className="mt-8">
+          <TrailHeading
+            title={section.label}
+            jp={section.sublabel}
+            details={`${plural(section.groups.length, "lição", "lições")} · ${plural(section.allChars.length, "caractere", "caracteres")}`}
+            summary={summary}
+          />
+        </div>
+
+        <div className="mt-5">
+          <NextLessonPanel lesson={next} href={next ? lessonHref(next) : null} details={next ? details(next) : ""} allDone={summary.completed === summary.total} />
+        </div>
+
+        <div className="mt-6">
+          <LessonTrail trail={trail} fallbackGlyph={section.glyph} getDetails={details} getHref={lessonHref} />
+        </div>
+      </ModuleShell>
     );
   }
 
-  if (moduleId === "japones-pratica") {
-    const color = moduleColor;
-    const bg = hslVar(moduleMeta.bgVar);
-
-    return (
-      <div className="min-h-screen" style={{ background: "hsl(var(--background))" }}>
-        <ModuleHeader moduleMeta={moduleMeta} color={color} onBack={() => navigate("/home")} />
-        {renderLessonList({
-          groups: practicaGroups,
-          summary: `${practicaGroups.length} lições · ${allPratica.length} itens`,
-          color,
-          bg,
-          stepColorVar: moduleMeta.colorVar,
-          getScopedId: group => `pratica__${group.id}`,
-          getDetails: group => `${group.readingWords.length} palavras · 3 exercícios`,
-        })}
-      </div>
-    );
-  }
+  // Japonês na Prática: uma trilha só, liberada em sequência.
+  const trail = buildTrail({
+    groups: practicaGroups,
+    getScopedId: practicaScopedId,
+    getProgress: (scopedId) => getLessonProgress(moduleId, scopedId),
+    isUnlocked: (index, ids) => isLessonUnlocked(moduleId, index, ids),
+  });
+  const summary = summarizeTrail(trail);
+  const next = nextLesson(trail);
+  const details = (lesson: TrailLesson) => `${plural(lesson.group.readingWords.length, "palavra", "palavras")} · 3 etapas`;
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: "hsl(var(--background))" }}>
-      <ModuleHeader moduleMeta={moduleMeta} color={moduleColor} onBack={() => navigate("/home")} />
-
-      <div className="flex-1 flex flex-col items-center justify-center gap-6 px-6 py-12 max-w-lg mx-auto w-full text-center">
-        <div
-          className="w-24 h-24 rounded-full flex items-center justify-center text-4xl font-jp"
-          style={{ background: hslVar(moduleMeta.bgVar), color: hslVar(moduleMeta.colorVar) }}
-        >
-          {moduleMeta.emoji}
-        </div>
-        <div>
-          <h2 className="text-2xl font-bold mb-2">{moduleMeta.label}</h2>
-          <p className="text-muted-foreground text-sm mb-4">{moduleMeta.description}</p>
-        </div>
-
-        <div className="w-full rounded-2xl border p-4" style={{ background: "hsl(var(--card))", borderColor: "hsl(var(--border))" }}>
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-3">Conteúdo do módulo</p>
-          <div className="flex flex-col gap-2">
-            {moduleMeta.topics.map((t, i) => (
-              <div key={t} className="flex items-center gap-3">
-                <div
-                  className="w-6 h-6 rounded-lg flex items-center justify-center text-xs font-bold"
-                  style={{ background: hslVar(moduleMeta.bgVar), color: hslVar(moduleMeta.colorVar) }}
-                >
-                  {i + 1}
-                </div>
-                <span className="text-sm">{t}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div
-          className="rounded-2xl px-5 py-4 w-full"
-          style={{ background: "hsl(var(--muted))" }}
-        >
-          <p className="text-sm font-semibold mb-1">🚧 Em desenvolvimento</p>
-          <p className="text-xs text-muted-foreground">
-            Este módulo estará disponível em breve. Complete os módulos anteriores primeiro!
-          </p>
-        </div>
-
-        <button
-          onClick={() => navigate("/home")}
-          className="w-full rounded-2xl py-3 font-semibold transition-all active:scale-95"
-          style={{ background: "hsl(var(--muted))", color: "hsl(var(--foreground))" }}
-        >
-          Voltar ao início
-        </button>
+    <ModuleShell
+      moduleMeta={moduleMeta}
+      stats={
+        <ModuleStats
+          lessons={`${summary.completed}/${summary.total}`}
+          chars={`${moduleProgress?.learnedChars ?? 0}/${allPratica.length}`}
+          charsLabel="Itens"
+          percent={getModulePercent(moduleId)}
+        />
+      }
+    >
+      <TrailHeading
+        title="Lições"
+        details={`${plural(practicaGroups.length, "lição", "lições")} · ${plural(allPratica.length, "item", "itens")}`}
+        summary={summary}
+      />
+      <div className="mt-5">
+        <NextLessonPanel lesson={next} href={next ? lessonHref(next) : null} details={next ? details(next) : ""} allDone={summary.completed === summary.total} />
       </div>
-    </div>
+      <div className="mt-6">
+        <LessonTrail trail={trail} fallbackGlyph={moduleMeta.emoji} getDetails={details} getHref={lessonHref} />
+      </div>
+    </ModuleShell>
   );
 }

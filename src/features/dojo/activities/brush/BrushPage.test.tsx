@@ -187,11 +187,12 @@ describe("Pincel (fluxo completo)", { timeout: 20_000 }, () => {
     expect(heading.querySelector('[lang="ja"]')).toBeNull();
     const glyph = currentGlyph();
 
-    // Desenho certo, mas pequeno e no canto: a nota encaixa antes de comparar.
+    // Desenho certo, mas pequeno e no canto: a nota encaixa antes de comparar. Pelo ponteiro os pontos
+    // saem arredondados, e o encaixe amplia esse erro: nota alta, mas nunca 100 (só o idêntico tira 100).
     drawGlyph(glyph, (point) => ({ x: point.x * 0.6, y: point.y * 0.6 }));
     expect(board()).toHaveAccessibleName(`Quadro de escrita: ${glyph.strokes.length} traços desenhados`);
     press("Enter");
-    expect(status()).toHaveTextContent(new RegExp(`^Modelo à mostra: ${glyph.char}\\. Nota automática (9\\d|100) de 100`));
+    expect(status()).toHaveTextContent(new RegExp(`^Modelo à mostra: ${glyph.char}\\. Nota automática [89]\\d de 100`));
     expect(screen.getByRole("button", { name: /^Acertei/ })).toHaveFocus();
     press("3");
 

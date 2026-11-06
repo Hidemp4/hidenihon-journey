@@ -6,6 +6,7 @@ import { loadMastery } from "@/features/dojo/shared/mastery";
 import { getKanaStudyItems } from "@/features/dojo/shared/studyItem";
 import { createMemoryStorage } from "@/features/dojo/shared/test/memoryStorage";
 import { TestRouter } from "@/features/dojo/shared/test/router";
+import { progressionStore } from "@/features/dojo/progression/store";
 import { AUTO_ADVANCE_MS } from "./constants";
 import ExamPage from "./ExamPage";
 
@@ -66,12 +67,37 @@ describe("Exame Chunin (fluxo completo)", () => {
     });
     vi.stubGlobal("localStorage", createMemoryStorage());
     localStorage.setItem("hidenihon:kana-reaction:audio", "off");
+    // XP e troféus de cada teste partem do zero (o store é do módulo; relê o disco novo).
+    progressionStore.resetForTests();
   });
 
   afterEach(() => {
     cleanup();
     vi.useRealTimers();
     vi.unstubAllGlobals();
+  });
+
+  it("o resultado mostra troféus e XP; a revisão dos erros só dá XP", () => {
+    renderExam();
+    fireEvent.click(screen.getByRole("button", { name: /Começar exame/ }));
+    [true, true, true, true, false, true, true, true, true, false].forEach((correct) => answerByKeyboard(correct));
+
+    // 80% de acerto com resposta na hora, contra a meta do Bronze III (40%): vitória.
+    const rewards = screen.getByRole("region", { name: "Recompensas da sessão" });
+    expect(rewards).toHaveTextContent(/Vitória · desempenho \d+ \(meta 40\)/);
+    expect(within(rewards).getByRole("list", { name: "De onde veio o XP" })).toHaveTextContent("Prática+16");
+    expect(screen.getByTestId("session-rewards-announcement")).toHaveTextContent(/^Vitória: \+\d+ troféus\. \+\d+ XP\./);
+    const afterExam = progressionStore.getSnapshot().totals;
+    expect(afterExam).toMatchObject({ wins: 1 });
+    expect(afterExam.trophies).toBeGreaterThan(0);
+
+    fireEvent.click(screen.getByRole("button", { name: "Revisar só os erros" }));
+    while (screen.queryByRole("group", { name: "Alternativas" })) answerByKeyboard(true);
+    const review = screen.getByRole("region", { name: "Recompensas da sessão" });
+    expect(review).toHaveTextContent("Treino sem troféus");
+    expect(review).toHaveTextContent("A revisão dos erros não vale troféus, só XP.");
+    expect(progressionStore.getSnapshot().totals).toMatchObject({ trophies: afterExam.trophies, wins: 1 });
+    expect(progressionStore.getSnapshot().totals.xp).toBeGreaterThan(afterExam.xp);
   });
 
   it("rodada de 10 no teclado → resultado → revisar só os erros → última nota no lobby", () => {

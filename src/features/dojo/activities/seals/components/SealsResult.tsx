@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { Footprints, RotateCcw, Timer } from "lucide-react";
 import { MetricCard, Panel } from "@/features/dojo/shared/components/ui";
 import { formatTimer } from "@/features/dojo/shared/format";
+import { SessionRewards } from "@/features/dojo/progression/components/SessionRewards";
 import { MAX_STARS } from "../constants";
 import { boardResult, elapsedSeconds, isBetterResult, movesForThreeStars } from "../results";
 import type { SealsBoard } from "../types";
@@ -57,6 +58,8 @@ export function SealsResult({ board, storageWarning, onRestart, onClose }: Seals
           Para {MAX_STARS} estrelas: até {movesForThreeStars(board.pairs.length)} jogadas.
         </p>
       )}
+
+      <SessionRewards activity="seals" sessionId={board.id} />
 
       {storageWarning && (
         <p className="mt-4 rounded-xl bg-journey-sand px-3 py-2 text-xs font-semibold text-journey-ink" role="alert">

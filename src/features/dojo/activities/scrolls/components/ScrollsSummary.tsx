@@ -1,5 +1,7 @@
 import { Shuffle, Undo2 } from "lucide-react";
 import { MetricCard, Panel, SectionTitle } from "@/features/dojo/shared/components/ui";
+import { PracticeXpPreview } from "@/features/dojo/progression/components/SessionRewards";
+import { scrollsSummary } from "@/features/dojo/progression/summaries";
 import { GRADE_OPTIONS } from "../constants";
 import { describeReturn } from "../scheduler";
 import { summarizeScrollSession } from "../summary";
@@ -32,6 +34,8 @@ export function ScrollsSummary({ session, onClose, onStartFree, onUndo }: Scroll
           <MetricCard key={option.id} label={option.label} value={String(summary.grades[option.id])} />
         ))}
       </div>
+
+      <PracticeXpPreview summary={scrollsSummary(session)} />
 
       {review ? (
         <>

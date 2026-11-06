@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "r
 import { filterKanaDeck, getAvailableGroups } from "@/features/dojo/shared/kanaDeck";
 import { recordActivity } from "@/features/dojo/shared/activityLog";
 import { masteryStore } from "@/features/dojo/shared/mastery";
+import { recordProgression } from "@/features/dojo/progression/store";
+import { reflexesSummary } from "@/features/dojo/progression/summaries";
 import { useArenaAudio } from "@/features/dojo/shared/useArenaAudio";
 import { useSaveOnExit } from "@/features/dojo/shared/useSaveOnExit";
 import {
@@ -27,10 +29,11 @@ import type { DojoAttempt, DojoSession, DojoSettings } from "./types";
 const NO_ATTEMPTS: readonly DojoAttempt[] = [];
 
 /**
- * Grava uma sessão encerrada no histórico da Arena e no domínio compartilhado.
+ * Grava uma sessão encerrada no histórico da Arena, no domínio compartilhado e no progresso.
  * Retorna `false` se o histórico não coube (o domínio falha em silêncio: o aviso da tela é só sobre o histórico).
+ * `finished = false`: a pessoa saiu no meio (não vale vitória).
  */
-function persistFinishedSession(session: DojoSession): boolean {
+function persistFinishedSession(session: DojoSession, finished = true): boolean {
   const saved = saveLocalDojoSession(session);
 
   // O id da sessão evita contar as mesmas respostas duas vezes no domínio por kana.
@@ -40,13 +43,16 @@ function persistFinishedSession(session: DojoSession): boolean {
     now: Number.isFinite(finishedAt) ? finishedAt : undefined,
   });
   // Sequência e missão do dia: kana respondidos (o aviso de armazenamento continua sendo só o do histórico).
-  recordActivity("reflexes", session.attempts.length, { sourceId: session.id, now: Number.isFinite(finishedAt) ? finishedAt : Date.now() });
+  const now = Number.isFinite(finishedAt) ? finishedAt : Date.now();
+  recordActivity("reflexes", session.attempts.length, { sourceId: session.id, now });
+  // XP e troféus (depois da atividade do dia: a missão e a sequência já contam esta sessão).
+  recordProgression(reflexesSummary(session, finished), { now });
 
   return saved;
 }
 
 function persistInterruptedSession(session: DojoSession) {
-  persistFinishedSession({ ...session, finishedAt: new Date().toISOString() });
+  persistFinishedSession({ ...session, finishedAt: new Date().toISOString() }, false);
 }
 /** Espaço em cima de botões/inputs deve acionar o próprio controle, não iniciar a batalha. */
 const INTERACTIVE_SELECTOR = "button, input, textarea, select, a, [contenteditable='true']";

@@ -129,7 +129,7 @@ export function useBrushGame() {
   const finishedSession = game.screen === "summary" ? game.session : null;
   useEffect(() => {
     if (!finishedSession) return;
-    setStorageWarning(!commitBrushSession(finishedSession, Date.now()));
+    setStorageWarning(!commitBrushSession(finishedSession, Date.now(), { finished: true }));
     setPracticed(loadPracticed());
   }, [finishedSession]);
 

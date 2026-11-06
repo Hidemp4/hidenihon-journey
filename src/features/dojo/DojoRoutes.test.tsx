@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import App from "@/App";
 import { AuthContext, type AuthContextType } from "@/contexts/auth-context-core";
 import DojoRoutes from "./DojoRoutes";
+import { progressionStore } from "./progression/store";
 import { createMemoryStorage } from "./shared/test/memoryStorage";
 import { TestRouter } from "./shared/test/router";
 
@@ -34,6 +35,27 @@ describe("rotas do Dojô", () => {
   it("/dojo é o hub", () => {
     renderAt("/dojo");
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Dojô");
+    // A liga e o nível ficam no topo do hub, com o caminho para o ranking.
+    expect(screen.getByRole("region", { name: "Bronze III" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Ver ranking/ })).toHaveAttribute("href", "/dojo/ranking");
+  });
+
+  it("/dojo/ranking abre o ranking (sob demanda) e o progresso passa a ser da conta logada", async () => {
+    const auth = { token: "token-de-teste", user: { id: "conta-ana", name: "Ana", email: "ana@exemplo.com" }, loading: false } as AuthContextType;
+    render(
+      <AuthContext.Provider value={auth}>
+        <TestRouter path="/dojo/ranking">
+          <Suspense fallback={<p>Carregando…</p>}>
+            <Routes>
+              <Route path="/dojo/*" element={<DojoRoutes />} />
+            </Routes>
+          </Suspense>
+        </TestRouter>
+      </AuthContext.Provider>
+    );
+    expect(await screen.findByRole("heading", { level: 1, name: /Ranking/ })).toBeInTheDocument();
+    expect(progressionStore.getSnapshot().userId).toBe("conta-ana");
+    progressionStore.resetForTests();
   });
 
   it("/dojo/reflexos abre a Arena de Reflexos (carregada sob demanda)", async () => {

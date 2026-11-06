@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { Brush, Target } from "lucide-react";
 import { MetricCard, Panel } from "@/features/dojo/shared/components/ui";
 import { answerOf } from "@/features/dojo/shared/content";
+import { SessionRewards } from "@/features/dojo/progression/components/SessionRewards";
 import { SELF_GRADE_OPTIONS } from "../constants";
 import { summarizeBrushSession } from "../messages";
 import type { BrushAttempt, BrushSession } from "../types";
@@ -46,6 +47,8 @@ export function BrushSummary({ session, storageWarning, onRestart, onClose }: Br
           <MetricCard label="Nota média" value={summary.averageScore == null ? "—" : String(summary.averageScore)} icon={<Brush size={15} aria-hidden="true" />} />
         </div>
       )}
+
+      <SessionRewards activity="brush" sessionId={session.id} />
 
       <ul className="mt-5 space-y-2">
         {session.attempts.map((attempt) => (

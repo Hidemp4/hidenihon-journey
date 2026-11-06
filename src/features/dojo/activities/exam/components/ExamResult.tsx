@@ -1,6 +1,7 @@
 import { Gauge, RotateCcw, Target } from "lucide-react";
 import { MetricCard, Panel, SectionTitle } from "@/features/dojo/shared/components/ui";
 import { formatMs } from "@/features/dojo/shared/format";
+import { SessionRewards } from "@/features/dojo/progression/components/SessionRewards";
 import { summarizeExamRun } from "../results";
 import type { ExamRun } from "../types";
 
@@ -32,6 +33,8 @@ export function ExamResult({ run, storageWarning, onReviewMisses, onRestart, onC
         <MetricCard label="Acertos" value={`${result.correct}/${result.total}`} icon={<Target size={15} aria-hidden="true" />} />
         <MetricCard label="Tempo médio" value={formatMs(result.averageMs)} icon={<Gauge size={15} aria-hidden="true" />} />
       </div>
+
+      <SessionRewards activity="exam" sessionId={run.id} />
 
       <h3 className="mt-6 text-[11px] font-black uppercase tracking-[0.14em] text-journey-wood">Erros</h3>
       {result.misses.length === 0 ? (

@@ -84,6 +84,16 @@
     --rank-sannin: 28 92% 52%;
     --rank-kage: 3 78% 44%;
 
+    /* Ligas do Dojô (troféus): cor do emblema de cada liga */
+    --league-bronze: 24 56% 42%;
+    --league-prata: 210 9% 60%;
+    --league-ouro: 43 90% 52%;
+    --league-platina: 176 34% 46%;
+    --league-diamante: 200 82% 54%;
+    --league-imortal: 350 68% 44%;
+    --league-tita: 222 22% 38%;
+    --league-lendario: 274 56% 46%;
+
     /* Sidebar */
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;

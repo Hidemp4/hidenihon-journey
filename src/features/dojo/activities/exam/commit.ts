@@ -1,5 +1,7 @@
 import { recordActivity } from "@/features/dojo/shared/activityLog";
 import { masteryStore, type MasteryResult } from "@/features/dojo/shared/mastery";
+import { recordProgression } from "@/features/dojo/progression/store";
+import { examSummary } from "@/features/dojo/progression/summaries";
 import { saveLastExamResult } from "./examRepository";
 import { summarizeExamRun } from "./results";
 import type { ExamRun } from "./types";
@@ -23,6 +25,8 @@ export function commitExamRun(run: ExamRun, { finished, now }: { finished: boole
   const savedMastery = masteryStore.recordResults(runToMasteryResults(run), { sourceId: run.id, now });
   // Sequência e missão do dia: perguntas respondidas (a revisão dos erros também é prática).
   const savedActivity = recordActivity("exam", run.answers.length, { sourceId: run.id, now });
+  // XP e troféus (depois da atividade do dia: a missão e a sequência já contam esta rodada).
+  recordProgression(examSummary(run, finished), { now });
   if (!finished || run.review) return savedMastery && savedActivity;
 
   const { score, total } = summarizeExamRun(run);

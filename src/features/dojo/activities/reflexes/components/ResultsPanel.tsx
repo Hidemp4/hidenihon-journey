@@ -1,6 +1,7 @@
 import { Flame, Gauge, Target } from "lucide-react";
 import { DojoStatsIcon, MetricCard, Panel, SectionTitle } from "@/features/dojo/shared/components/ui";
 import { formatMs, formatSessionDate } from "@/features/dojo/shared/format";
+import { SessionRewards } from "@/features/dojo/progression/components/SessionRewards";
 import { getPerformanceLabel } from "../metrics";
 import type { DojoAttempt, DojoSession, DojoStats } from "../types";
 
@@ -54,6 +55,8 @@ export function ResultsPanel({ session, stats, justFinished, storageWarning }: R
         <MetricCard label="Acertos" value={`${stats.correct}/${stats.total}`} icon={<Target size={15} />} />
         <MetricCard label="Mais rápido" value={formatMs(stats.fastestCompletionMs)} icon={<Gauge size={15} />} />
       </div>
+
+      <SessionRewards activity="reflexes" sessionId={session.id} />
 
       {stats.timeouts > 0 && (
         <p className="mt-3 text-xs font-semibold text-journey-ink/70">

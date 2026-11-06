@@ -1,5 +1,7 @@
 import { recordActivity } from "@/features/dojo/shared/activityLog";
 import { masteryStore } from "@/features/dojo/shared/mastery";
+import { recordProgression } from "@/features/dojo/progression/store";
+import { sealsSummary } from "@/features/dojo/progression/summaries";
 import { boardResult, boardToMasteryResults } from "./results";
 import { saveSealsBestIfBetter } from "./sealsRepository";
 import type { SealsBoard } from "./types";
@@ -12,6 +14,8 @@ export function commitSealsGame(board: SealsBoard, { finished, now }: { finished
   const savedMastery = masteryStore.recordResults(boardToMasteryResults(board), { sourceId: board.id, now });
   // Sequência e missão do dia: pares formados (partida abandonada também conta o que formou).
   const savedActivity = recordActivity("seals", board.matchedPairIds.length, { sourceId: board.id, now });
+  // XP e troféus (depois da atividade do dia: a missão e a sequência já contam esta mesa).
+  recordProgression(sealsSummary(board, finished && board.finishedAt != null), { now });
   if (!finished || board.finishedAt == null) return savedMastery && savedActivity;
   return saveSealsBestIfBetter(board.configKey, boardResult(board, now)) && savedMastery && savedActivity;
 }

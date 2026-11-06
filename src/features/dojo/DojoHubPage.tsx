@@ -4,6 +4,7 @@ import { ChevronRight, Lock } from "lucide-react";
 import { Link } from "react-router-dom";
 import { FloatingLearningNav } from "@/components/navigation/FloatingLearningNav";
 import { HubMission } from "./HubMission";
+import { RankCard } from "./progression/components/RankCard";
 import { DOJO_ACTIVITIES, getActivity, type ActivityBadge, type DojoActivity } from "./registry";
 import { computeStreak, countsForDay, loadActivityLog, type Streak } from "./shared/activityLog";
 import { localDayNumber, systemUtcOffset } from "./shared/calendar";
@@ -199,6 +200,7 @@ export default function DojoHubPage() {
       />
 
       <main className="relative mx-auto max-w-6xl px-5 pt-8 sm:px-8 lg:px-12">
+        <RankCard />
         <HubMission mission={snapshot.mission} streak={snapshot.streak} />
 
         <SectionTitle eyebrow="Atividades" title="Escolha seu treino" />

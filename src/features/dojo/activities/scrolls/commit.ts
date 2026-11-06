@@ -1,6 +1,8 @@
 import { recordActivity } from "@/features/dojo/shared/activityLog";
 import { localDayNumber } from "@/features/dojo/shared/calendar";
 import { masteryStore, type MasteryResult } from "@/features/dojo/shared/mastery";
+import { recordProgression } from "@/features/dojo/progression/store";
+import { scrollsSummary } from "@/features/dojo/progression/summaries";
 import { recordIntroduced } from "./scrollsRepository";
 import type { ScrollSession } from "./types";
 
@@ -35,5 +37,7 @@ export function commitScrollSession(session: ScrollSession): boolean {
   const savedDaily = recordIntroduced(localDayNumber(last.gradedAt, session.offsetAt), session.id, countIntroduced(session));
   // Sequência e missão do dia: cartas avaliadas.
   const savedActivity = recordActivity("scrolls", results.length, { sourceId: session.id, now: last.gradedAt, offsetAt: session.offsetAt });
+  // Só XP: os Pergaminhos são autoavaliados e não valem troféus.
+  recordProgression(scrollsSummary(session), { now: last.gradedAt, offsetAt: session.offsetAt });
   return savedMastery && savedDaily && savedActivity;
 }

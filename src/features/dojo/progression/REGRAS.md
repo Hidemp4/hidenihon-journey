@@ -92,7 +92,8 @@ Cada atividade transforma a sessão num número de 0 a 100, o **desempenho**:
 - **Velocidade**: cada acerto ganha de 0 a 100 pelo tempo que levou, e vale a média dos acertos. Sem
   acerto, a velocidade é 0.
   - Na Arena: 100 até 0,5 s e 0 a partir de 1,5 s. Do tempo, sai o que se gasta digitando: 0,12 s por
-    letra além da primeira (a mesma régua do rótulo de reação).
+    letra além da primeira (a mesma régua do rótulo de reação). O tempo vai até a última tecla da
+    resposta: o Enter (ou o Espaço, no computador) só confirma e não entra na conta.
   - No Exame: 100 até 1,5 s e 0 a partir de 5 s.
 - **Selos**: com memória perfeita, uma mesa sai em cerca de 1,6 jogada por par (a mesma conta das
   estrelas). Com 6 pares, 10 jogadas valem 96, 12 valem 80 e 15 valem 64.

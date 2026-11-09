@@ -60,15 +60,45 @@ function runCountdown() {
   advance(COUNTDOWN_STEP_MS * COUNTDOWN_START + COUNTDOWN_GO_MS + 50);
 }
 
-/** Lê o kana na tela e digita o romaji certo (ou um errado). */
-function answerCurrent(correct = true) {
-  advance(50); // dois frames: o kana é marcado como "mostrado" só depois de pintar
+function currentKana() {
   const kana = HIRAGANA.find((item) => screen.queryByText(item.char) !== null);
   if (!kana) throw new Error("nenhum kana na tela");
-
-  fireEvent.change(screen.getByRole("textbox"), { target: { value: correct ? kana.romaji : "xq" } });
   return kana;
 }
+
+/** Lê o kana na tela, digita o romaji certo (ou um errado) e confirma com Enter. */
+function answerCurrent(correct = true) {
+  advance(50); // dois frames: o kana é marcado como "mostrado" só depois de pintar
+  const kana = currentKana();
+  const input = screen.getByRole("textbox");
+
+  fireEvent.change(input, { target: { value: correct ? kana.romaji : "xq" } });
+  fireEvent.keyDown(input, { key: "Enter" });
+  return kana;
+}
+
+/** `pointer: fine` = computador (mouse/trackpad); sem isso o jsdom se comporta como celular. */
+function stubPointer(fine: boolean) {
+  vi.stubGlobal("matchMedia", (query: string) => ({
+    matches: fine && query === "(pointer: fine)",
+    media: query,
+    onchange: null,
+    addEventListener: () => {},
+    removeEventListener: () => {},
+    addListener: () => {},
+    removeListener: () => {},
+    dispatchEvent: () => false,
+  }));
+}
+
+function startBattle() {
+  renderArena();
+  enterLobbyAndStart();
+  runCountdown();
+  advance(50);
+}
+
+const attemptsSoFar = () => screen.getByText(/^\d+\/10$/).textContent;
 
 describe("Arena de Reflexos dentro do Dojô (fluxo completo)", () => {
   beforeEach(() => {
@@ -208,6 +238,86 @@ describe("Arena de Reflexos dentro do Dojô (fluxo completo)", () => {
     fireEvent.click(screen.getByRole("link", { name: "Voltar ao Dojô" }));
     expect(loadLocalDojoSessions()).toHaveLength(1);
     expect(Object.values(loadMastery().items).reduce((sum, record) => sum + record.seen, 0)).toBe(1);
+  });
+
+  it("digitar não confirma sozinho: o erro de digitação dá para apagar, e só o Enter vale", () => {
+    startBattle();
+    const kana = currentKana();
+    const input = screen.getByRole("textbox");
+
+    // Antes, "xq" já virava erro na hora. Agora fica no campo até a pessoa confirmar.
+    fireEvent.change(input, { target: { value: "xq" } });
+    expect(input).toHaveValue("xq");
+    expect(attemptsSoFar()).toBe("0/10");
+
+    fireEvent.change(input, { target: { value: "" } });
+    fireEvent.keyDown(input, { key: "Enter" }); // Enter com o campo vazio: nada acontece
+    expect(attemptsSoFar()).toBe("0/10");
+
+    fireEvent.change(input, { target: { value: kana.romaji } });
+    expect(screen.getByText(kana.char)).toBeInTheDocument();
+    expect(attemptsSoFar()).toBe("0/10");
+
+    fireEvent.keyDown(input, { key: "Enter" });
+    expect(attemptsSoFar()).toBe("1/10");
+    expect(input).toHaveValue("");
+
+    fireEvent.click(screen.getByRole("button", { name: /Encerrar sessão/ }));
+    expect(loadLocalDojoSessions()[0].attempts.map((attempt) => attempt.outcome)).toEqual(["correct"]);
+  });
+
+  it("celular: o Espaço não confirma (e não entra no campo); o Enter do teclado chega pelo envio do formulário", () => {
+    stubPointer(false);
+    startBattle();
+    const kana = currentKana();
+    const input = screen.getByRole("textbox");
+
+    expect(screen.getByText("Enter confirma")).toBeInTheDocument();
+    expect(screen.queryByText(/Esc encerra/)).not.toBeInTheDocument();
+
+    fireEvent.change(input, { target: { value: kana.romaji } });
+    fireEvent.keyDown(input, { key: " " });
+    fireEvent.change(input, { target: { value: `${kana.romaji} ` } });
+    expect(input).toHaveValue(kana.romaji);
+    expect(attemptsSoFar()).toBe("0/10");
+
+    const form = input.closest("form");
+    if (!form) throw new Error("o campo deveria estar num formulário");
+    fireEvent.submit(form);
+    expect(attemptsSoFar()).toBe("1/10");
+  });
+
+  it("computador: Enter ou Espaço confirmam; segurar a tecla não confirma o kana seguinte", () => {
+    stubPointer(true);
+    startBattle();
+    const input = screen.getByRole("textbox");
+    expect(screen.getByText("Enter ou Espaço confirma · Esc encerra")).toBeInTheDocument();
+
+    fireEvent.change(input, { target: { value: currentKana().romaji } });
+    fireEvent.keyDown(input, { key: " ", code: "Space" });
+    expect(attemptsSoFar()).toBe("1/10");
+
+    advance(50);
+    fireEvent.change(input, { target: { value: currentKana().romaji } });
+    fireEvent.keyDown(input, { key: " ", code: "Space", repeat: true });
+    expect(attemptsSoFar()).toBe("1/10");
+    fireEvent.keyDown(input, { key: "Enter" });
+    expect(attemptsSoFar()).toBe("2/10");
+
+    // No teclado japonês (IME), Enter e Espaço escolhem a conversão: não confirmam.
+    advance(50);
+    fireEvent.change(input, { target: { value: currentKana().romaji } });
+    fireEvent.keyDown(input, { key: "Enter", isComposing: true });
+    fireEvent.keyDown(input, { key: " ", keyCode: 229 });
+    expect(attemptsSoFar()).toBe("2/10");
+  });
+
+  it("na batalha a arena encolhe no celular (ninjas numa faixa baixa) e o placar fica para telas maiores", () => {
+    startBattle();
+    const header = screen.getByRole("banner");
+    expect(header.querySelector("canvas")).not.toBeNull(); // os ninjas continuam lá
+    expect(header.firstElementChild?.nextElementSibling?.nextElementSibling).toHaveClass("pb-[4.5rem]", "sm:pb-32");
+    expect(screen.getByRole("group", { name: "Resumo de desempenho" }).parentElement).toHaveClass("hidden", "sm:flex");
   });
 
   it("Espaço no lobby continua iniciando a batalha", () => {

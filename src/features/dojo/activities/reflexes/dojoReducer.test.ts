@@ -103,7 +103,7 @@ describe("treino", () => {
     expect(again).toBe(shown);
   });
 
-  it("não resolve enquanto a resposta é parcial, mas registra a primeira tecla", () => {
+  it("não resolve enquanto digita, mas registra a primeira tecla", () => {
     const { state: initial, nextStamp } = startTraining();
     const state = withLongRomajiPrompt(initial);
     const prompt = currentPrompt(state);
@@ -122,7 +122,7 @@ describe("treino", () => {
     expect(next.game.prompt.firstKeyAt).not.toBeNull();
   });
 
-  it("registra acerto e avança para outro kana", () => {
+  it("registra acerto ao confirmar e avança para outro kana", () => {
     const { state, nextStamp } = startTraining();
     const prompt = currentPrompt(state);
 
@@ -130,7 +130,7 @@ describe("treino", () => {
       type: "ANSWER",
       promptId: prompt.id,
       value: prompt.kana.romaji,
-      final: false,
+      final: true,
       stamp: nextStamp(),
     });
 
@@ -142,20 +142,65 @@ describe("treino", () => {
     expect(next.effect?.type).toBe("correct");
   });
 
-  it("falha na hora quando a digitação não pode mais acertar", () => {
+  it("digitar nunca julga: nem o errado (ainda dá para apagar) nem o certo; só a confirmação", () => {
+    const { state, nextStamp } = startTraining();
+    const prompt = currentPrompt(state);
+    const type = (from: DojoState, value: string, final = false) =>
+      dojoReducer(from, { type: "ANSWER", promptId: prompt.id, value, final, stamp: nextStamp() });
+
+    const typo = type(state, "zzz");
+    if (typo.game.screen !== "training") throw new Error("deveria seguir em treino");
+    expect(typo.game.session.attempts).toHaveLength(0);
+    expect(typo.game.prompt.id).toBe(prompt.id);
+
+    const fixed = type(typo, prompt.kana.romaji);
+    if (fixed.game.screen !== "training") throw new Error("deveria seguir em treino");
+    expect(fixed.game.session.attempts).toHaveLength(0);
+
+    const confirmed = type(fixed, prompt.kana.romaji, true);
+    if (confirmed.game.screen !== "training") throw new Error("deveria seguir em treino");
+    expect(confirmed.game.session.attempts.map((attempt) => attempt.outcome)).toEqual(["correct"]);
+  });
+
+  it("confirmar um romaji que não bate conta como erro", () => {
     const { state, nextStamp } = startTraining();
     const prompt = currentPrompt(state);
 
-    const next = dojoReducer(state, {
-      type: "ANSWER",
-      promptId: prompt.id,
-      value: "zzz",
-      final: false,
-      stamp: nextStamp(),
-    });
+    const next = dojoReducer(state, { type: "ANSWER", promptId: prompt.id, value: "zzz", final: true, stamp: nextStamp() });
 
     if (next.game.screen !== "training") throw new Error("deveria seguir em treino");
-    expect(next.game.session.attempts[0].outcome).toBe("wrong");
+    expect(next.game.session.attempts[0]).toMatchObject({ outcome: "wrong", answer: "zzz" });
+  });
+
+  it("confirmar o campo vazio (Enter sem querer) não conta nada", () => {
+    const { state, nextStamp } = startTraining();
+    const prompt = currentPrompt(state);
+
+    expect(dojoReducer(state, { type: "ANSWER", promptId: prompt.id, value: "  ", final: true, stamp: nextStamp() })).toBe(state);
+  });
+
+  it("o tempo vai até a última tecla da resposta: o Enter só confirma", () => {
+    const { state: initial, nextStamp } = startTraining();
+    const prompt = currentPrompt(initial);
+    const [first, ...rest] = prompt.kana.romaji;
+    const answer = (value: string, final: boolean, now: number) => ({
+      type: "ANSWER" as const,
+      promptId: prompt.id,
+      value,
+      final,
+      stamp: nextStamp({ now }),
+    });
+
+    const state = run(
+      initial,
+      { type: "PROMPT_SHOWN", promptId: prompt.id, now: 10_000 },
+      answer(first, false, 10_300),
+      answer(prompt.kana.romaji, false, 10_300 + rest.length * 120 + 1),
+      answer(prompt.kana.romaji, true, 12_000)
+    );
+
+    if (state.game.screen !== "training") throw new Error("deveria seguir em treino");
+    expect(state.game.session.attempts[0]).toMatchObject({ outcome: "correct", reactionMs: 300, completionMs: 301 + rest.length * 120 });
   });
 
   it("Enter com resposta incompleta conta como erro", () => {
@@ -182,7 +227,7 @@ describe("treino", () => {
       type: "ANSWER",
       promptId: prompt.id,
       value: prompt.kana.romaji,
-      final: false,
+      final: true,
       stamp: nextStamp(),
     });
 
@@ -190,7 +235,7 @@ describe("treino", () => {
       type: "ANSWER",
       promptId: prompt.id,
       value: prompt.kana.romaji,
-      final: false,
+      final: true,
       stamp: nextStamp(),
     });
 
@@ -212,6 +257,20 @@ describe("treino", () => {
     expect(timedOut.effect?.type).toBe("timeout");
   });
 
+  it("no Avançado, resposta digitada e não confirmada a tempo vira tempo esgotado (com o limite cheio)", () => {
+    const { state: initial, nextStamp } = startTraining({ difficulty: "jonin" });
+    const prompt = currentPrompt(initial);
+    const state = run(
+      initial,
+      { type: "PROMPT_SHOWN", promptId: prompt.id, now: 10_000 },
+      { type: "ANSWER", promptId: prompt.id, value: prompt.kana.romaji, final: false, stamp: nextStamp({ now: 10_400 }) },
+      { type: "TIMEOUT", promptId: prompt.id, stamp: nextStamp({ now: 15_000 }) }
+    );
+
+    if (state.game.screen !== "training") throw new Error("deveria seguir em treino");
+    expect(state.game.session.attempts[0]).toMatchObject({ outcome: "timeout", completionMs: 5_000 });
+  });
+
   it("encerra sozinho ao atingir a quantidade e guarda o resultado", () => {
     const training = startTraining({ mode: "quantity", targetCount: 10 });
     const { nextStamp } = training;
@@ -223,7 +282,7 @@ describe("treino", () => {
         type: "ANSWER",
         promptId: prompt.id,
         value: prompt.kana.romaji,
-        final: false,
+        final: true,
         stamp: nextStamp(),
       });
     }
@@ -256,7 +315,7 @@ describe("treino", () => {
       type: "ANSWER",
       promptId: prompt.id,
       value: prompt.kana.romaji,
-      final: false,
+      final: true,
       stamp: nextStamp(),
     });
 

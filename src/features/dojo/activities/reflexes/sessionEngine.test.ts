@@ -2,11 +2,13 @@ import { describe, expect, it } from "vitest";
 import { getKanaDeck } from "@/features/dojo/shared/kanaDeck";
 import {
   ADVANCED_RESPONSE_LIMIT_MS,
+  answeredAt,
   buildMissWeights,
   createAttempt,
   createPrompt,
   createTimeoutAttempt,
   markFirstKey,
+  markKeystroke,
   markShown,
   pickNextKana,
   shouldFinishSession,
@@ -62,6 +64,23 @@ describe("createAttempt", () => {
     const attempt = createAttempt(createPrompt(deck[0], "p1"), deck[0].romaji, nextStamp({ now: 500 }));
 
     expect(attempt.completionMs).toBe(0);
+  });
+});
+
+describe("tempo da resposta com confirmação", () => {
+  it("cada tecla guarda a primeira e a última; o tempo vai até a última, não até o Enter", () => {
+    const prompt = markShown(createPrompt(deck[0], "p1"), 1_000);
+    const typed = markKeystroke(markKeystroke(prompt, 1_200), 1_450);
+
+    expect(typed).toMatchObject({ shownAt: 1_000, firstKeyAt: 1_200, lastKeyAt: 1_450 });
+    expect(answeredAt(typed, 2_300)).toBe(1_450);
+    // Sem tecla registrada (só a confirmação), vale a hora da confirmação.
+    expect(answeredAt(prompt, 2_300)).toBe(2_300);
+  });
+
+  it("o tempo esgotado continua com o limite cheio, mesmo com algo digitado", () => {
+    const prompt = markKeystroke(markShown(createPrompt(deck[0], "p1"), 1_000), 1_400);
+    expect(createTimeoutAttempt(prompt, createStampFactory()()).completionMs).toBe(ADVANCED_RESPONSE_LIMIT_MS);
   });
 });
 

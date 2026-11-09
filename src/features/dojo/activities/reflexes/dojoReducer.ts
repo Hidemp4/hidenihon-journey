@@ -1,13 +1,15 @@
 import { COUNTDOWN_START, DEFAULT_DOJO_SETTINGS } from "./constants";
 import { filterKanaDeck } from "@/features/dojo/shared/kanaDeck";
-import { evaluateAnswer, normalizeAnswer } from "@/features/dojo/shared/romaji";
+import { normalizeAnswer } from "@/features/dojo/shared/romaji";
 import {
+  answeredAt,
   buildMissWeights,
   combineWeights,
   createAttempt,
   createPrompt,
   createTimeoutAttempt,
   markFirstKey,
+  markKeystroke,
   markShown,
   pickNextKana,
   shouldFinishSession,
@@ -60,6 +62,7 @@ export type DojoAction =
   /** `masteryWeights`: por kana; sem ele (ou vazio) o sorteio é o de antes da Fase 6. */
   | { type: "START_TRAINING"; stamp: Stamp; masteryWeights?: ReadonlyMap<string, number> }
   | { type: "PROMPT_SHOWN"; promptId: string; now: number }
+  /** `final: false` = digitando (só marca o tempo); `final: true` = confirmou a resposta. */
   | { type: "ANSWER"; promptId: string; value: string; final: boolean; stamp: Stamp }
   | { type: "TIMEOUT"; promptId: string; stamp: Stamp }
   | { type: "FINISH"; stamp: Stamp }
@@ -208,17 +211,19 @@ export function dojoReducer(state: DojoState, action: DojoAction): DojoState {
       if (game.screen !== "training" || game.prompt.id !== action.promptId) return state;
 
       const value = normalizeAnswer(action.value);
+      // Confirmar o campo vazio (Enter sem querer) não conta nada.
       if (value === "") return state;
 
-      const prompt = markFirstKey(game.prompt, action.stamp.now);
-      const status = evaluateAnswer(prompt.kana.romaji, value);
-
-      if (status === "partial" && !action.final) {
-        return prompt === game.prompt ? state : { ...state, game: { ...game, prompt } };
+      // Digitando: só marca o tempo. Nada é julgado antes da confirmação, então um erro de digitação
+      // ainda dá para apagar (antes a resposta valia sozinha a cada tecla e o toque errado já era erro).
+      if (!action.final) {
+        return { ...state, game: { ...game, prompt: markKeystroke(game.prompt, action.stamp.now) } };
       }
 
-      // `final` (Enter) com resposta incompleta conta como erro.
-      return resolveAttempt(state, game, createAttempt(prompt, value, action.stamp), action.stamp);
+      // Confirmou (Enter, ou Espaço no computador): certo ou errado; resposta incompleta conta como erro.
+      const prompt = markFirstKey(game.prompt, action.stamp.now);
+      const attempt = createAttempt(prompt, value, { ...action.stamp, now: answeredAt(prompt, action.stamp.now) });
+      return resolveAttempt(state, game, attempt, action.stamp);
     }
 
     case "TIMEOUT": {

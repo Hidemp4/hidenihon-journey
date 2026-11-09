@@ -115,7 +115,7 @@ export function buildMissWeights(attempts: readonly DojoAttempt[]): Map<string, 
 }
 
 export function createPrompt(kana: TrainingKana, id: string = createId()): DojoPrompt {
-  return { id, kana, shownAt: null, firstKeyAt: null };
+  return { id, kana, shownAt: null, firstKeyAt: null, lastKeyAt: null };
 }
 
 /** Marca o momento em que o kana foi pintado na tela. */
@@ -127,6 +127,20 @@ export function markShown(prompt: DojoPrompt, now: number): DojoPrompt {
 export function markFirstKey(prompt: DojoPrompt, now: number): DojoPrompt {
   if (prompt.firstKeyAt != null) return prompt;
   return { ...prompt, shownAt: prompt.shownAt ?? now, firstKeyAt: now };
+}
+
+/** Cada tecla que muda a resposta: guarda a primeira (reação) e a última (fim da digitação). */
+export function markKeystroke(prompt: DojoPrompt, now: number): DojoPrompt {
+  return { ...markFirstKey(prompt, now), lastKeyAt: now };
+}
+
+/**
+ * Quando a resposta ficou pronta: na última tecla digitada, não no Enter (ou Espaço) que a confirma.
+ * Assim a confirmação não pesa no tempo, e a régua de velocidade (rótulos, domínio, troféus) segue a
+ * mesma de quando a resposta valia sozinha, ao terminar de digitar.
+ */
+export function answeredAt(prompt: DojoPrompt, confirmedAt: number) {
+  return prompt.lastKeyAt == null ? confirmedAt : Math.min(prompt.lastKeyAt, confirmedAt);
 }
 
 export function createAttempt(

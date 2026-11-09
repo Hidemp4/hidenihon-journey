@@ -62,6 +62,8 @@ export default function ReflexesPage() {
       // No treino o Esc encerra a sessão (useDojoGame); só no lobby ele volta ao Dojô.
       escapeToHub={!isTraining}
       compact={isTraining}
+      // No celular a arena encolhe na batalha: o kana fica acima do centro, livre do teclado virtual.
+      slim={isTraining}
       eyebrow={isTraining ? "Batalha em andamento" : "Sala de preparação"}
       headline={
         isTraining ? undefined : (
@@ -74,8 +76,8 @@ export default function ReflexesPage() {
       stats={<ReflexesStats stats={stats} />}
     >
       <main
-        className={`relative mx-auto px-5 pt-8 sm:px-8 lg:px-12 ${
-          isTraining ? "max-w-2xl" : "grid max-w-6xl items-start gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(340px,.9fr)]"
+        className={`relative mx-auto px-5 sm:px-8 sm:pt-8 lg:px-12 ${
+          isTraining ? "max-w-2xl pt-2" : "grid max-w-6xl items-start gap-6 pt-8 lg:grid-cols-[minmax(0,1.1fr)_minmax(340px,.9fr)]"
         }`}
       >
         {/* Configurações: só no lobby. Travadas durante a espera do "Iniciar batalha". */}
@@ -91,7 +93,7 @@ export default function ReflexesPage() {
             <div className="journey-leaf-pattern absolute inset-0 opacity-10" aria-hidden="true" />
             <BattleEffectBanner effect={game.effect} visual={!focusLayout} reduceMotion={reduceMotion} />
 
-            <div className="relative rounded-[1.5rem] bg-journey-sand p-5 text-center sm:p-8">
+            <div className={`relative rounded-[1.5rem] bg-journey-sand text-center sm:p-8 ${isTraining ? "p-4" : "p-5"}`}>
               {phase.screen === "training" ? (
                 <TrainingCard
                   session={phase.session}

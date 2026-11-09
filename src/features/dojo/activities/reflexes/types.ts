@@ -22,6 +22,8 @@ export interface DojoPrompt {
   /** `null` até o kana ter sido de fato pintado na tela. */
   shownAt: number | null;
   firstKeyAt: number | null;
+  /** Última tecla que mudou a resposta. O tempo da tentativa vai até aqui (o Enter só confirma). */
+  lastKeyAt: number | null;
 }
 
 export interface DojoAttempt {

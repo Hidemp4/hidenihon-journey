@@ -33,11 +33,15 @@ export function BattleEffectBanner({ effect, visual, reduceMotion }: BattleEffec
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: reduceMotion ? 1 : 1.3 }}
             transition={{ duration: reduceMotion ? 0.05 : 0.18 }}
-            className="pointer-events-none absolute inset-x-3 top-5 z-30 flex justify-center"
+            // No celular o cartão é baixo e o próximo kana aparece logo abaixo do topo: lá a faixa é uma
+            // linha só, em cima do contador, para não cobrir o kana novo nos 700 ms em que fica na tela.
+            className="pointer-events-none absolute inset-x-3 top-1.5 z-30 flex justify-center sm:top-5"
           >
-            <div className={`-rotate-3 border-4 bg-journey-forest-deep px-6 py-3 text-center text-white shadow-2xl ${banner.border}`}>
-              <p className="font-jp text-5xl font-black">{banner.kanji}</p>
-              <p className="mt-1 text-xs font-black uppercase tracking-[0.2em]">{banner.label}</p>
+            <div
+              className={`flex -rotate-2 items-center gap-2.5 border-[3px] bg-journey-forest-deep px-4 py-1 text-white shadow-2xl sm:block sm:-rotate-3 sm:border-4 sm:px-6 sm:py-3 sm:text-center ${banner.border}`}
+            >
+              <p className="font-jp text-2xl font-black sm:text-5xl">{banner.kanji}</p>
+              <p className="text-[11px] font-black uppercase tracking-[0.16em] sm:mt-1 sm:text-xs sm:tracking-[0.2em]">{banner.label}</p>
             </div>
           </motion.div>
         )}

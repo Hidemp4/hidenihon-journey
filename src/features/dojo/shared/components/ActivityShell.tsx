@@ -22,6 +22,8 @@ interface ActivityShellProps {
   escapeToHub?: boolean;
   chrome?: ActivityShellChrome;
   compact?: boolean;
+  /** Ver `ArenaHeader`: no celular, arena baixa e sem placar (batalha com teclado virtual aberto). */
+  slim?: boolean;
   eyebrow?: ReactNode;
   /** Chamada grande abaixo da barra (vira h2: o h1 da página é o nome da atividade). */
   headline?: ReactNode;
@@ -67,6 +69,7 @@ export function ActivityShell({
   escapeToHub = true,
   chrome = "header",
   compact = true,
+  slim = false,
   eyebrow,
   headline,
   description,
@@ -96,6 +99,7 @@ export function ActivityShell({
       ) : (
         <ArenaHeader
           compact={compact}
+          slim={slim}
           reduceMotion={reduceMotion}
           bar={
             <div className="flex items-center gap-3">

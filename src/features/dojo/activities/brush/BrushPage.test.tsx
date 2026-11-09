@@ -3,6 +3,7 @@ import { Route, Routes } from "react-router-dom";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { loadMastery } from "@/features/dojo/shared/mastery";
 import { getKanaStudyItems } from "@/features/dojo/shared/studyItem";
+import { openAdvancedSettings } from "@/features/dojo/shared/test/advancedSettings";
 import { createMemoryStorage } from "@/features/dojo/shared/test/memoryStorage";
 import { TestRouter } from "@/features/dojo/shared/test/router";
 import BrushPage from "./BrushPage";
@@ -98,6 +99,7 @@ function drawGlyph(glyph: GlyphModel, transform: (point: Point) => Point = (poin
 
 function startWith(mode: RegExp) {
   fireEvent.click(screen.getByRole("button", { name: mode }));
+  openAdvancedSettings();
   fireEvent.click(screen.getByRole("button", { name: "あ行" }));
   fireEvent.click(screen.getByRole("button", { name: /Começar sessão/ }));
 }
@@ -252,6 +254,7 @@ describe("Pincel (fluxo completo)", { timeout: 20_000 }, () => {
     await flushStrokes();
     fireEvent.click(screen.getByRole("button", { name: /Kanji N5/ }));
     await flushStrokes();
+    openAdvancedSettings();
     fireEvent.click(screen.getByRole("button", { name: "Corpo" }));
     expect(screen.getByText("5 kanji no baralho · 0 já praticados")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /^Traçar/ }));

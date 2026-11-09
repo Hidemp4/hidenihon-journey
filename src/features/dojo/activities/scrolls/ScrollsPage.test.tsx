@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { localDayNumber, startOfLocalDay, systemUtcOffset } from "@/features/dojo/shared/calendar";
 import { loadMastery } from "@/features/dojo/shared/mastery";
 import { getKanaStudyItems } from "@/features/dojo/shared/studyItem";
+import { openAdvancedSettings } from "@/features/dojo/shared/test/advancedSettings";
 import { createMemoryStorage } from "@/features/dojo/shared/test/memoryStorage";
 import { TestRouter } from "@/features/dojo/shared/test/router";
 import { loadIntroducedToday } from "./scrollsRepository";
@@ -259,6 +260,7 @@ describe("Pergaminhos (fluxo completo)", () => {
     // Alfabeto não se aplica a kanji; os grupos viram temas; não há escolha de direção.
     expect(screen.queryByRole("group", { name: "Alfabeto" })).not.toBeInTheDocument();
     expect(screen.queryByRole("group", { name: "Direção" })).not.toBeInTheDocument();
+    openAdvancedSettings();
     expect(screen.getByRole("heading", { name: "Temas de kanji" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Corpo" }));
     fireEvent.click(screen.getByRole("button", { name: "5 novos" }));

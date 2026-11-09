@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { getKanjiStudyItems } from "@/features/dojo/shared/kanjiDeck";
 import { loadMastery } from "@/features/dojo/shared/mastery";
 import { getKanaStudyItems } from "@/features/dojo/shared/studyItem";
+import { openAdvancedSettings } from "@/features/dojo/shared/test/advancedSettings";
 import { createMemoryStorage } from "@/features/dojo/shared/test/memoryStorage";
 import { TestRouter } from "@/features/dojo/shared/test/router";
 import { progressionStore } from "@/features/dojo/progression/store";
@@ -239,6 +240,7 @@ describe("Exame Chunin (fluxo completo)", () => {
     renderExam();
     fireEvent.click(screen.getByRole("button", { name: /Kanji N5/ }));
     expect(screen.getByRole("button", { name: "Kanji → significado" })).toHaveAttribute("aria-pressed", "true");
+    openAdvancedSettings();
     fireEvent.click(screen.getByRole("button", { name: "Corpo" }));
     expect(screen.getByText("Rodada · Kanji N5 · 10 perguntas")).toBeInTheDocument();
     expect(screen.getByText("5 kanji no baralho")).toBeInTheDocument();

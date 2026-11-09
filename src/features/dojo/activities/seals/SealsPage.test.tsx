@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { getKanjiStudyItems } from "@/features/dojo/shared/kanjiDeck";
 import { loadMastery } from "@/features/dojo/shared/mastery";
 import { getKanaStudyItems } from "@/features/dojo/shared/studyItem";
+import { openAdvancedSettings } from "@/features/dojo/shared/test/advancedSettings";
 import { createMemoryStorage } from "@/features/dojo/shared/test/memoryStorage";
 import { TestRouter } from "@/features/dojo/shared/test/router";
 import { MISMATCH_HIDE_MS } from "./constants";
@@ -263,6 +264,7 @@ describe("Selos (fluxo completo)", { timeout: 20_000 }, () => {
   it("conteúdo pequeno para o tabuleiro: explica e não deixa começar", () => {
     renderSeals();
     fireEvent.click(screen.getByRole("button", { name: /4×6/ }));
+    openAdvancedSettings();
     fireEvent.click(screen.getByRole("button", { name: /^や/ }));
     expect(screen.getByText(/Este tabuleiro pede 12 pares e o conteúdo escolhido tem 3/)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Começar partida/ })).toBeDisabled();
@@ -271,6 +273,7 @@ describe("Selos (fluxo completo)", { timeout: 20_000 }, () => {
   it("kanji ↔ significado: mesa de kanji, vitória e domínio com ids kanji:", () => {
     renderSeals();
     fireEvent.click(screen.getByRole("button", { name: /Kanji ↔ significado/ }));
+    openAdvancedSettings();
     expect(screen.getByRole("heading", { name: "Temas de kanji" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Corpo" }));
     // 5 kanji não enchem a mesa de 6 pares.

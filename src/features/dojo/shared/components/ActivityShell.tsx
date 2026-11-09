@@ -2,9 +2,8 @@ import { useEffect, type ReactNode } from "react";
 import { useReducedMotion } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import { FloatingLearningNav } from "@/components/navigation/FloatingLearningNav";
 import { DOJO_HUB_ROUTE } from "../constants";
-import { ArenaHeader } from "./ArenaHeader";
+import { ArenaHeader, type ArenaMobileSize } from "./ArenaHeader";
 import { AudioToggle } from "./ui";
 
 /**
@@ -22,8 +21,8 @@ interface ActivityShellProps {
   escapeToHub?: boolean;
   chrome?: ActivityShellChrome;
   compact?: boolean;
-  /** Ver `ArenaHeader`: no celular, arena baixa e sem placar (batalha com teclado virtual aberto). */
-  slim?: boolean;
+  /** Altura do cabeçalho no celular: ver `ArenaHeader` (`short` no lobby, `battle` com o teclado aberto). */
+  mobileHeader?: ArenaMobileSize;
   eyebrow?: ReactNode;
   /** Chamada grande abaixo da barra (vira h2: o h1 da página é o nome da atividade). */
   headline?: ReactNode;
@@ -69,7 +68,7 @@ export function ActivityShell({
   escapeToHub = true,
   chrome = "header",
   compact = true,
-  slim = false,
+  mobileHeader = "default",
   eyebrow,
   headline,
   description,
@@ -93,13 +92,15 @@ export function ActivityShell({
   }
 
   return (
-    <div className="journey-home min-h-screen min-h-[100dvh] bg-journey-surface pb-28 font-ui text-journey-ink">
+    // Sem o menu flutuante (Trilha / Dojô) dentro das atividades: aqui o "Dojô" ficava aceso em laranja e,
+    // no celular, parecia o botão de começar; quem tocava saía da atividade. A saída é o "← Dojô" do topo.
+    <div className="journey-home min-h-screen min-h-[100dvh] bg-journey-surface pb-[calc(3rem+env(safe-area-inset-bottom,0px))] font-ui text-journey-ink">
       {chrome === "focus" ? (
         <div className="fixed right-4 top-4 z-20">{audioToggle}</div>
       ) : (
         <ArenaHeader
           compact={compact}
-          slim={slim}
+          mobileSize={mobileHeader}
           reduceMotion={reduceMotion}
           bar={
             <div className="flex items-center gap-3">
@@ -128,9 +129,6 @@ export function ActivityShell({
       )}
 
       {children}
-
-      {/* No modo foco o menu é distração e uma saída acidental no meio da resposta. */}
-      {chrome !== "focus" && <FloatingLearningNav />}
     </div>
   );
 }

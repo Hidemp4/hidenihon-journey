@@ -61,23 +61,16 @@ export default function ReflexesPage() {
       chrome={focusLayout ? "focus" : "header"}
       // No treino o Esc encerra a sessão (useDojoGame); só no lobby ele volta ao Dojô.
       escapeToHub={!isTraining}
-      compact={isTraining}
-      // No celular a arena encolhe na batalha: o kana fica acima do centro, livre do teclado virtual.
-      slim={isTraining}
+      // Cabeçalho compacto também no lobby (antes: chamada + descrição + arena alta, que no celular
+      // ocupavam a primeira tela inteira). No celular a arena ainda encolhe: no lobby as configurações
+      // aparecem logo; na batalha o kana fica acima do centro, livre do teclado virtual.
+      mobileHeader={isTraining ? "battle" : "short"}
       eyebrow={isTraining ? "Batalha em andamento" : "Sala de preparação"}
-      headline={
-        isTraining ? undefined : (
-          <>
-            Monte sua <span className="text-journey-orange">missão</span>
-          </>
-        )
-      }
-      description={isTraining ? undefined : "Escolha o alfabeto, defina seu rank e prepare-se para entrar no combate."}
       stats={<ReflexesStats stats={stats} />}
     >
       <main
         className={`relative mx-auto px-5 sm:px-8 sm:pt-8 lg:px-12 ${
-          isTraining ? "max-w-2xl pt-2" : "grid max-w-6xl items-start gap-6 pt-8 lg:grid-cols-[minmax(0,1.1fr)_minmax(340px,.9fr)]"
+          isTraining ? "max-w-2xl pt-2" : "grid max-w-6xl items-start gap-5 pt-5 lg:grid-cols-[minmax(0,1.1fr)_minmax(340px,.9fr)] lg:gap-6"
         }`}
       >
         {/* Configurações: só no lobby. Travadas durante a espera do "Iniciar batalha". */}
@@ -87,8 +80,9 @@ export default function ReflexesPage() {
           </fieldset>
         )}
 
-        {/* No celular o painel de iniciar vem primeiro; no desktop fica fixo ao lado das configurações. */}
-        <div className={`space-y-5 ${isTraining ? "" : "order-first lg:sticky lg:top-6 lg:order-none"}`}>
+        {/* Celular: configurações → avançadas → "Pronto para treinar?" no fim. Desktop: coluna fixa ao lado.
+            No lobby esta coluna é `contents` no celular, para o relatório poder subir sozinho (abaixo). */}
+        <div className={isTraining ? "space-y-5" : "contents lg:sticky lg:top-6 lg:block lg:space-y-5"}>
           <section className="relative isolate overflow-hidden rounded-[2rem] border-2 border-[hsl(var(--journey-wood-deep))] bg-journey-forest-deep p-2.5 shadow-[0_8px_0_hsl(var(--journey-wood-deep)/.35)] sm:p-4">
             <div className="journey-leaf-pattern absolute inset-0 opacity-10" aria-hidden="true" />
             <BattleEffectBanner effect={game.effect} visual={!focusLayout} reduceMotion={reduceMotion} />
@@ -115,9 +109,12 @@ export default function ReflexesPage() {
             </div>
           </section>
 
-          {/* O relatório só aparece fora do treino: antes ele surgia na 1ª resposta e deslocava o layout. */}
+          {/* O relatório só aparece fora do treino: antes ele surgia na 1ª resposta e deslocava o layout.
+              Logo depois de uma batalha, no celular, ele vem antes das configurações: é o que a pessoa quer ver. */}
           {!isTraining && game.lastSession && (
-            <ResultsPanel session={game.lastSession} stats={stats} justFinished={game.justFinished} storageWarning={game.storageWarning} />
+            <div data-testid="reflexes-report" className={game.justFinished ? "order-first lg:order-none" : undefined}>
+              <ResultsPanel session={game.lastSession} stats={stats} justFinished={game.justFinished} storageWarning={game.storageWarning} />
+            </div>
           )}
 
           {isTraining && (

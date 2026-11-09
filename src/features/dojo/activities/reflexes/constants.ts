@@ -18,6 +18,8 @@ export const COUNTDOWN_START = 3;
 export const COUNTDOWN_STEP_MS = 900;
 export const COUNTDOWN_GO_MS = 650;
 export const FEEDBACK_DURATION_MS = 700;
+/** No erro a faixa mostra o romaji certo: fica mais tempo, para dar para ler enquanto o próximo kana já aparece. */
+export const MISS_FEEDBACK_DURATION_MS = 1_800;
 
 export const TIME_LIMIT_OPTIONS = [30, 60, 180, 300] as const;
 export const TARGET_COUNT_OPTIONS = [10, 20, 50] as const;

@@ -41,7 +41,7 @@ export function StartCard({ settings, deckSize, justFinished, starting, onStart 
         {deckEmpty
           ? "Nenhum kana nesta seleção. Escolha outros grupos."
           : justFinished
-            ? "Confira seu desempenho abaixo ou inicie outra rodada."
+            ? "Confira seu desempenho no relatório ou inicie outra rodada."
             : "Pressione Espaço ou toque no botão para começar."}
       </p>
 

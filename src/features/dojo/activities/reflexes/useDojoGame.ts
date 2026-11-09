@@ -12,6 +12,7 @@ import {
   COUNTDOWN_STEP_MS,
   ENTER_ARENA_DELAY_MS,
   FEEDBACK_DURATION_MS,
+  MISS_FEEDBACK_DURATION_MS,
   LOBBY_MUSIC_DELAY_MS,
 } from "./constants";
 import {
@@ -265,7 +266,8 @@ export function useDojoGame() {
     if (!effect) return;
 
     void playFeedback(effect.type);
-    const timeoutId = window.setTimeout(() => dispatch({ type: "CLEAR_EFFECT", id: effect.id }), FEEDBACK_DURATION_MS);
+    const duration = effect.type === "correct" ? FEEDBACK_DURATION_MS : MISS_FEEDBACK_DURATION_MS;
+    const timeoutId = window.setTimeout(() => dispatch({ type: "CLEAR_EFFECT", id: effect.id }), duration);
     return () => window.clearTimeout(timeoutId);
   }, [effect, playFeedback]);
 

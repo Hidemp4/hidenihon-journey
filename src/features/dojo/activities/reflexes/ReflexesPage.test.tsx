@@ -60,9 +60,11 @@ function runCountdown() {
   advance(COUNTDOWN_STEP_MS * COUNTDOWN_START + COUNTDOWN_GO_MS + 50);
 }
 
+/** O kana da pergunta (a faixa de erro também mostra um kana: o anterior, com o romaji certo). */
 function currentKana() {
-  const kana = HIRAGANA.find((item) => screen.queryByText(item.char) !== null);
-  if (!kana) throw new Error("nenhum kana na tela");
+  const char = screen.getByTestId("reflexes-prompt").textContent;
+  const kana = HIRAGANA.find((item) => item.char === char);
+  if (!kana) throw new Error(`kana desconhecido na tela: ${char}`);
   return kana;
 }
 
@@ -127,7 +129,7 @@ describe("Arena de Reflexos dentro do Dojô (fluxo completo)", () => {
 
     // Lobby: casca (h1 = atividade) + textos de sempre.
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Arena de Reflexos 反応");
-    expect(screen.getByRole("heading", { level: 2, name: "Monte sua missão" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 2, name: "Configure sua missão" })).toBeInTheDocument();
     expect(screen.getByText("Sala de preparação")).toBeInTheDocument();
     expect(screen.getByRole("group", { name: "Resumo de desempenho" })).toBeInTheDocument();
 
@@ -144,6 +146,8 @@ describe("Arena de Reflexos dentro do Dojô (fluxo completo)", () => {
     expect(screen.getByRole("heading", { name: "Sessão finalizada" })).toBeInTheDocument();
     expect(screen.getByText("Resultado da missão")).toBeInTheDocument();
     expect(screen.getByText("10/10")).toBeInTheDocument();
+    // Logo depois da batalha, no celular, o relatório vem antes das configurações.
+    expect(screen.getByTestId("reflexes-report")).toHaveClass("order-first", "lg:order-none");
 
     const [saved] = loadLocalDojoSessions();
     expect(saved.attempts).toHaveLength(10);
@@ -255,7 +259,7 @@ describe("Arena de Reflexos dentro do Dojô (fluxo completo)", () => {
     expect(attemptsSoFar()).toBe("0/10");
 
     fireEvent.change(input, { target: { value: kana.romaji } });
-    expect(screen.getByText(kana.char)).toBeInTheDocument();
+    expect(currentKana()).toBe(kana);
     expect(attemptsSoFar()).toBe("0/10");
 
     fireEvent.keyDown(input, { key: "Enter" });
@@ -318,6 +322,77 @@ describe("Arena de Reflexos dentro do Dojô (fluxo completo)", () => {
     expect(header.querySelector("canvas")).not.toBeNull(); // os ninjas continuam lá
     expect(header.firstElementChild?.nextElementSibling?.nextElementSibling).toHaveClass("pb-[4.5rem]", "sm:pb-32");
     expect(screen.getByRole("group", { name: "Resumo de desempenho" }).parentElement).toHaveClass("hidden", "sm:flex");
+  });
+
+  it("lobby: configurações primeiro, grupos nas avançadas (fechadas, com todos), e o \"Pronto para treinar?\" no fim", () => {
+    renderArena();
+    fireEvent.click(screen.getByRole("button", { name: /Entrar na arena/ }));
+
+    // Sem o menu flutuante: o "Dojô" laranja parecia o botão de começar e tirava a pessoa daqui.
+    expect(screen.queryByRole("navigation", { name: "Alternar área de estudo" })).not.toBeInTheDocument();
+    expect(screen.getByRole("banner").querySelector("canvas")).not.toBeNull(); // os ninjas continuam
+    expect(screen.queryByRole("heading", { name: "Monte sua missão" })).not.toBeInTheDocument();
+
+    const settings = screen.getByRole("heading", { name: "Configure sua missão" });
+    const advanced = screen.getByRole("button", { name: /Abrir configurações avançadas/ });
+    const start = screen.getByRole("heading", { name: "Pronto para treinar?" });
+    const follows = (a: Element, b: Element) => Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(follows(settings, advanced) && follows(advanced, start)).toBe(true);
+    expect(start.closest(".contents")).not.toBeNull(); // no celular a coluna se desfaz: o cartão fica no fim
+
+    expect(advanced).toHaveAttribute("aria-expanded", "false");
+    expect(advanced).toHaveAccessibleName(/Grupos de kana: todos/);
+    expect(screen.queryByRole("button", { name: "あ行" })).not.toBeInTheDocument();
+    expect(screen.getByText(`${HIRAGANA.length} kana no baralho`)).toBeInTheDocument();
+
+    fireEvent.click(advanced);
+    const close = screen.getByRole("button", { name: /Fechar configurações avançadas/ });
+    expect(close).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByRole("button", { name: "Todos" })).toHaveAttribute("aria-pressed", "true");
+
+    fireEvent.click(screen.getByRole("button", { name: "か行" }));
+    expect(screen.getByText("5 kana no baralho")).toBeInTheDocument();
+    expect(close).toHaveAccessibleName(/Grupos de kana: か行/);
+
+    // Fechar não apaga a escolha: o resumo continua mostrando o filtro.
+    fireEvent.click(close);
+    expect(screen.queryByRole("button", { name: "か行" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Abrir configurações avançadas/ })).toHaveAccessibleName(/Grupos de kana: か行/);
+  });
+
+  it("errou: a faixa mostra na hora o romaji certo do kana (e o anúncio também)", () => {
+    startBattle();
+    const missed = answerCurrent(false);
+
+    const effect = screen.getByTestId("battle-effect");
+    expect(effect).toHaveTextContent("Combo interrompido");
+    expect(effect).toHaveTextContent(`${missed.char} se lê ${missed.romaji}`);
+    expect(screen.getByRole("status")).toHaveTextContent(`Combo interrompido. Resposta certa: ${missed.romaji}.`);
+
+    // Fica mais que a do acerto (700 ms), para dar tempo de ler. (A saída da faixa é animada pelo
+    // framer-motion em tempo real, então o fim do efeito é conferido pelo anúncio, que zera junto.)
+    advance(1_000);
+    expect(screen.getByRole("status")).toHaveTextContent(missed.romaji);
+    advance(1_000);
+    expect(screen.getByRole("status")).toHaveTextContent("");
+
+    answerCurrent();
+    expect(screen.getByRole("status")).toHaveTextContent(/^Golpe certeiro$/);
+    expect(screen.getAllByTestId("battle-effect").at(-1)).toHaveTextContent("Golpe certeiro");
+    expect(screen.getAllByTestId("battle-effect").at(-1)).not.toHaveTextContent("se lê");
+  });
+
+  it("modo foco: sem a faixa no acerto, mas a correção do erro aparece (parada)", () => {
+    renderArena();
+    fireEvent.click(screen.getByRole("button", { name: /Entrar na arena/ }));
+    fireEvent.click(screen.getByRole("switch", { name: /Modo foco/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Iniciar batalha/ }));
+    runCountdown();
+
+    answerCurrent();
+    expect(screen.queryByTestId("battle-effect")).not.toBeInTheDocument();
+    const missed = answerCurrent(false);
+    expect(screen.getByTestId("battle-effect")).toHaveTextContent(`${missed.char} se lê ${missed.romaji}`);
   });
 
   it("Espaço no lobby continua iniciando a batalha", () => {

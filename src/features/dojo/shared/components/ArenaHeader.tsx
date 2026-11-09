@@ -2,14 +2,18 @@ import type { ReactNode } from "react";
 import { Zap } from "lucide-react";
 import { NinjaArena } from "./NinjaArena";
 
+export type ArenaMobileSize = "default" | "short" | "battle";
+
 interface ArenaHeaderProps {
   /** Em treino o cabeçalho encolhe e vira só a arena com o placar. */
   compact: boolean;
   /**
-   * Batalha com digitação: no celular a faixa dos ninjas fica baixa e o placar some, para o kana e o
-   * campo caberem acima do teclado virtual. A partir do `sm` é igual ao compacto.
+   * Altura no celular (abaixo do `sm`). A partir do `sm`, `short` e `battle` usam o espaço do compacto.
+   * - `default`: o mesmo das telas maiores.
+   * - `short`: faixa dos ninjas baixa, para as configurações do lobby aparecerem logo.
+   * - `battle`: faixa ainda mais baixa e sem o placar, para o kana e o campo caberem acima do teclado.
    */
-  slim?: boolean;
+  mobileSize?: ArenaMobileSize;
   /** Barra do topo da casca de atividade (voltar ao Dojô, título, áudio). */
   bar?: ReactNode;
   eyebrow?: ReactNode;
@@ -22,16 +26,17 @@ interface ArenaHeaderProps {
   reduceMotion: boolean;
 }
 
-function spacingFor(compact: boolean, slim: boolean) {
+function spacingFor(compact: boolean, mobileSize: ArenaMobileSize) {
   // Ninjas a 2× ocupam uns 60px de pé: 4,5rem ainda mostra o corpo inteiro abaixo da barra.
-  if (slim) return { container: "pb-[4.5rem] pt-3 sm:pb-32 sm:pt-5 lg:pb-44", bar: "sm:mb-4", aside: "hidden sm:flex" };
+  if (mobileSize === "battle") return { container: "pb-[4.5rem] pt-3 sm:pb-32 sm:pt-5 lg:pb-44", bar: "sm:mb-4", aside: "hidden sm:flex" };
+  if (mobileSize === "short") return { container: "pb-20 pt-3 sm:pb-32 sm:pt-5 lg:pb-44", bar: "mb-3 sm:mb-4", aside: "flex" };
   if (compact) return { container: "pb-32 pt-5 lg:pb-44", bar: "mb-4", aside: "flex" };
   return { container: "pb-36 pt-8 md:pb-40 md:pt-12 lg:pb-52", bar: "mb-6 md:mb-8", aside: "flex" };
 }
 
 export function ArenaHeader({
   compact,
-  slim = false,
+  mobileSize = "default",
   bar,
   eyebrow,
   headline,
@@ -41,7 +46,7 @@ export function ArenaHeader({
   reduceMotion,
 }: ArenaHeaderProps) {
   const hasIntro = Boolean(eyebrow || headline || description);
-  const spacing = spacingFor(compact, slim);
+  const spacing = spacingFor(compact, mobileSize);
 
   return (
     <header className="relative isolate overflow-hidden border-b-[6px] border-[hsl(var(--journey-wood-deep))] bg-journey-forest-deep text-white">

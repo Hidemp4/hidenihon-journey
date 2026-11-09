@@ -209,7 +209,7 @@ export function TrainingCard({ session, prompt, startedAtPerf, onPromptShown, on
       {/* Sem animação de entrada: ela entraria no tempo de reação medido. No celular o cartão é mais
           baixo, para o kana e o campo caberem juntos acima do teclado virtual. */}
       <div className="mx-auto mt-3 flex min-h-32 flex-col items-center justify-center rounded-[1.5rem] border-2 border-journey-wood/15 bg-white px-4 py-3 shadow-[0_5px_0_hsl(var(--journey-wood)/.12)] sm:mt-7 sm:min-h-60 sm:rounded-[1.75rem] sm:py-7">
-        <span lang="ja" className="font-jp text-[6.5rem] font-black leading-none text-journey-ink sm:text-[9rem]">
+        <span lang="ja" data-testid="reflexes-prompt" className="font-jp text-[6.5rem] font-black leading-none text-journey-ink sm:text-[9rem]">
           {prompt.kana.char}
         </span>
         {settings.difficulty === "genin" && (

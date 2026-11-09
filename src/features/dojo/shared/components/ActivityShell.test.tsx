@@ -36,7 +36,8 @@ describe("ActivityShell", () => {
     const { onToggleAudio } = renderShell({ eyebrow: "Revisão" });
 
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Pergaminhos 巻物");
-    expect(screen.getByRole("navigation", { name: "Alternar área de estudo" })).toBeInTheDocument();
+    // Sem o menu flutuante: o "Dojô" aceso em laranja parecia o botão de começar. A saída é o "← Dojô".
+    expect(screen.queryByRole("navigation", { name: "Alternar área de estudo" })).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Voltar ao Dojô" })).toHaveAttribute("href", "/dojo");
     expect(screen.getByText("Revisão")).toBeInTheDocument();
 

@@ -42,6 +42,8 @@ export interface BattleEffect {
   id: string;
   type: AttemptOutcome;
   kana: string;
+  /** Romaji certo do kana: no erro e no tempo esgotado a faixa mostra na hora qual era. */
+  romaji: string;
 }
 
 export interface DojoState {
@@ -108,7 +110,7 @@ function resolveAttempt(
 ): DojoState {
   const attempts = [...training.session.attempts, attempt];
   const session: DojoSession = { ...training.session, attempts };
-  const effect: BattleEffect = { id: attempt.id, type: attempt.outcome, kana: attempt.kana };
+  const effect: BattleEffect = { id: attempt.id, type: attempt.outcome, kana: attempt.kana, romaji: attempt.romaji };
 
   if (shouldFinishSession(session.settings, attempts.length)) {
     return finishSession(state, session, stamp, effect);

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import type { ComponentProps } from "react";
 import { Route, Routes } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
@@ -43,6 +43,22 @@ describe("ActivityShell", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Desativar áudio" }));
     expect(onToggleAudio).toHaveBeenCalledTimes(1);
+  });
+
+  it("tela travada: o documento não rola enquanto ela está montada, e volta como estava ao sair", () => {
+    document.body.style.overflowY = "auto";
+    renderShell({ lockScroll: true });
+    expect(document.documentElement.style.overflowY).toBe("hidden");
+    expect(document.body.style.overflowY).toBe("hidden");
+
+    cleanup();
+    expect(document.documentElement.style.overflowY).toBe("");
+    expect(document.body.style.overflowY).toBe("auto");
+    document.body.style.overflowY = "";
+
+    // A tela cheia (abertura, contagem) não trava nada.
+    renderShell({ lockScroll: true, chrome: "takeover" });
+    expect(document.documentElement.style.overflowY).toBe("");
   });
 
   it("Esc volta ao hub, inclusive com o foco num campo", () => {

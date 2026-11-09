@@ -87,7 +87,6 @@ interface TrainingCardProps {
 
 export function TrainingCard({ session, prompt, startedAtPerf, onPromptShown, onAnswer, onTimeout }: TrainingCardProps) {
   const { settings, attempts } = session;
-  const cardRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [focused, setFocused] = useState(true);
   // Lido uma vez: o tipo de aparelho não muda no meio da batalha.
@@ -124,23 +123,6 @@ export function TrainingCard({ session, prompt, startedAtPerf, onPromptShown, on
     if (input && document.activeElement !== input) input.focus({ preventScroll: true });
   }, [prompt.id]);
 
-  // No celular, o teclado virtual encolhe a área visível (e o foco acima não rola a página): quando ele
-  // abre, traz o cartão inteiro (kana + campo) para cima do teclado. `nearest` não mexe se já couber.
-  useEffect(() => {
-    const viewport = window.visualViewport;
-    if (!viewport) return;
-
-    function keepCardInView() {
-      // Com zoom de pinça, quem decide o que fica na tela é a pessoa.
-      if (!viewport || viewport.scale > 1.01) return;
-      if (document.activeElement !== inputRef.current) return;
-      cardRef.current?.scrollIntoView({ block: "nearest" });
-    }
-
-    viewport.addEventListener("resize", keepCardInView);
-    return () => viewport.removeEventListener("resize", keepCardInView);
-  }, []);
-
   function handleChange(event: ChangeEvent<HTMLInputElement>) {
     // Romaji não tem espaço: o do teclado do celular (ou de uma sugestão automática) some aqui.
     const next = event.target.value.replace(/\s+/g, "").toLowerCase();
@@ -173,7 +155,7 @@ export function TrainingCard({ session, prompt, startedAtPerf, onPromptShown, on
   }
 
   return (
-    <div ref={cardRef} className="scroll-my-3" onClick={() => inputRef.current?.focus({ preventScroll: true })}>
+    <div onClick={() => inputRef.current?.focus({ preventScroll: true })}>
       <div className="flex items-center justify-between gap-4 text-[11px] font-black uppercase tracking-[0.12em] text-journey-ink/70 sm:text-xs">
         <span className="inline-flex shrink-0 items-center gap-1.5">
           {settings.mode === "timed" ? <Clock3 size={14} aria-hidden="true" /> : <Target size={14} aria-hidden="true" />}
@@ -207,9 +189,10 @@ export function TrainingCard({ session, prompt, startedAtPerf, onPromptShown, on
       )}
 
       {/* Sem animação de entrada: ela entraria no tempo de reação medido. No celular o cartão é mais
-          baixo, para o kana e o campo caberem juntos acima do teclado virtual. */}
-      <div className="mx-auto mt-3 flex min-h-32 flex-col items-center justify-center rounded-[1.5rem] border-2 border-journey-wood/15 bg-white px-4 py-3 shadow-[0_5px_0_hsl(var(--journey-wood)/.12)] sm:mt-7 sm:min-h-60 sm:rounded-[1.75rem] sm:py-7">
-        <span lang="ja" data-testid="reflexes-prompt" className="font-jp text-[6.5rem] font-black leading-none text-journey-ink sm:text-[9rem]">
+          baixo, para o kana e o campo caberem juntos acima do teclado virtual sem o navegador precisar
+          rolar a tela (rolar empurrava o cabeçalho para cima). */}
+      <div className="mx-auto mt-3 flex min-h-28 flex-col items-center justify-center rounded-[1.5rem] border-2 border-journey-wood/15 bg-white px-4 py-2 shadow-[0_5px_0_hsl(var(--journey-wood)/.12)] sm:mt-7 sm:min-h-60 sm:rounded-[1.75rem] sm:py-7">
+        <span lang="ja" data-testid="reflexes-prompt" className="font-jp text-[6rem] font-black leading-none text-journey-ink sm:text-[9rem]">
           {prompt.kana.char}
         </span>
         {settings.difficulty === "genin" && (

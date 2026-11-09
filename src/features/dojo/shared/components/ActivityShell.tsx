@@ -21,8 +21,13 @@ interface ActivityShellProps {
   escapeToHub?: boolean;
   chrome?: ActivityShellChrome;
   compact?: boolean;
-  /** Altura do cabeçalho no celular: ver `ArenaHeader` (`short` no lobby, `battle` com o teclado aberto). */
+  /** Altura do cabeçalho no celular: ver `ArenaHeader` (`short` no lobby, `minimal` na batalha e no ranking). */
   mobileHeader?: ArenaMobileSize;
+  /**
+   * Tela travada (a batalha da Arena): a página não rola, então o "← Dojô" e o áudio ficam parados no
+   * topo. Só a área da atividade, abaixo do cabeçalho, rola se não couber na tela.
+   */
+  lockScroll?: boolean;
   eyebrow?: ReactNode;
   /** Chamada grande abaixo da barra (vira h2: o h1 da página é o nome da atividade). */
   headline?: ReactNode;
@@ -30,6 +35,9 @@ interface ActivityShellProps {
   stats?: ReactNode;
   children: ReactNode;
 }
+
+/** Folga no fim da página (e acima da barra de gestos do iPhone). */
+const BOTTOM_SPACE = "pb-[calc(3rem+env(safe-area-inset-bottom,0px))]";
 
 const backLinkClass =
   "inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-full border-2 border-white/25 bg-black/45 px-4 text-xs font-black uppercase tracking-[0.12em] text-white transition hover:border-journey-orange/60 hover:text-journey-gold focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-journey-orange/60";
@@ -40,6 +48,28 @@ function BackToHubLink() {
       <ArrowLeft size={16} strokeWidth={2.6} aria-hidden="true" /> Dojô
     </Link>
   );
+}
+
+/**
+ * Trava a rolagem do documento enquanto `locked` (o `overflow-y: hidden` no html e no body) e volta ao
+ * topo. Sem isso a página da batalha rolava (vinda do fim do lobby, um arrasto, o teclado do celular) e
+ * o cabeçalho com o "← Dojô" e o áudio subia, às vezes cortado.
+ */
+function useLockedDocumentScroll(locked: boolean) {
+  useEffect(() => {
+    if (!locked) return;
+
+    const { documentElement: html, body } = document;
+    const previous = { html: html.style.overflowY, body: body.style.overflowY };
+    html.style.overflowY = "hidden";
+    body.style.overflowY = "hidden";
+    (document.scrollingElement ?? html).scrollTop = 0;
+
+    return () => {
+      html.style.overflowY = previous.html;
+      body.style.overflowY = previous.body;
+    };
+  }, [locked]);
 }
 
 function useEscapeToHub(enabled: boolean) {
@@ -69,6 +99,7 @@ export function ActivityShell({
   chrome = "header",
   compact = true,
   mobileHeader = "default",
+  lockScroll = false,
   eyebrow,
   headline,
   description,
@@ -77,6 +108,8 @@ export function ActivityShell({
 }: ActivityShellProps) {
   const reduceMotion = useReducedMotion() ?? false;
   useEscapeToHub(escapeToHub);
+  // A tela cheia (abertura, contagem) não tem cabeçalho para segurar.
+  useLockedDocumentScroll(lockScroll && chrome !== "takeover");
 
   const audioToggle = <AudioToggle enabled={audioEnabled} onToggle={onToggleAudio} />;
 
@@ -94,7 +127,12 @@ export function ActivityShell({
   return (
     // Sem o menu flutuante (Trilha / Dojô) dentro das atividades: aqui o "Dojô" ficava aceso em laranja e,
     // no celular, parecia o botão de começar; quem tocava saía da atividade. A saída é o "← Dojô" do topo.
-    <div className="journey-home min-h-screen min-h-[100dvh] bg-journey-surface pb-[calc(3rem+env(safe-area-inset-bottom,0px))] font-ui text-journey-ink">
+    <div
+      data-scroll-locked={lockScroll ? "true" : undefined}
+      className={`journey-home bg-journey-surface font-ui text-journey-ink ${
+        lockScroll ? "flex h-screen h-[100dvh] flex-col overflow-y-hidden" : `min-h-screen min-h-[100dvh] ${BOTTOM_SPACE}`
+      }`}
+    >
       {chrome === "focus" ? (
         <div className="fixed right-4 top-4 z-20">{audioToggle}</div>
       ) : (
@@ -128,7 +166,11 @@ export function ActivityShell({
         />
       )}
 
-      {children}
+      {lockScroll ? (
+        <div className={`min-h-0 flex-1 overflow-y-auto overscroll-contain ${BOTTOM_SPACE}`}>{children}</div>
+      ) : (
+        children
+      )}
     </div>
   );
 }

@@ -64,7 +64,9 @@ export default function ReflexesPage() {
       // Cabeçalho compacto também no lobby (antes: chamada + descrição + arena alta, que no celular
       // ocupavam a primeira tela inteira). No celular a arena ainda encolhe: no lobby as configurações
       // aparecem logo; na batalha o kana fica acima do centro, livre do teclado virtual.
-      mobileHeader={isTraining ? "battle" : "short"}
+      mobileHeader={isTraining ? "minimal" : "short"}
+      // Na batalha a página não rola: o "← Dojô" e o áudio ficam parados no topo (antes subiam às vezes).
+      lockScroll={isTraining}
       eyebrow={isTraining ? "Batalha em andamento" : "Sala de preparação"}
       stats={<ReflexesStats stats={stats} />}
     >

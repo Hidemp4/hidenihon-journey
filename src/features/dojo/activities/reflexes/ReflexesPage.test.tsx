@@ -324,6 +324,26 @@ describe("Arena de Reflexos dentro do Dojô (fluxo completo)", () => {
     expect(screen.getByRole("group", { name: "Resumo de desempenho" }).parentElement).toHaveClass("hidden", "sm:flex");
   });
 
+  it("na batalha a página não rola (o \"← Dojô\" e o áudio ficam no topo); fora dela volta a rolar", () => {
+    renderArena();
+    fireEvent.click(screen.getByRole("button", { name: /Entrar na arena/ }));
+    expect(document.documentElement.style.overflowY).toBe("");
+
+    fireEvent.click(screen.getByRole("button", { name: /Iniciar batalha/ }));
+    runCountdown();
+    expect(document.documentElement.style.overflowY).toBe("hidden");
+    expect(document.body.style.overflowY).toBe("hidden");
+    // O cabeçalho fica parado e só a área da batalha (abaixo dele) pode rolar, se não couber.
+    const shell = screen.getByRole("banner").parentElement;
+    expect(shell).toHaveAttribute("data-scroll-locked", "true");
+    expect(shell).toHaveClass("h-[100dvh]", "overflow-y-hidden");
+    expect(screen.getByRole("textbox").closest(".overflow-y-auto")).not.toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: /Encerrar sessão/ }));
+    expect(document.documentElement.style.overflowY).toBe("");
+    expect(document.body.style.overflowY).toBe("");
+  });
+
   it("lobby: configurações primeiro, grupos nas avançadas (fechadas, com todos), e o \"Pronto para treinar?\" no fim", () => {
     renderArena();
     fireEvent.click(screen.getByRole("button", { name: /Entrar na arena/ }));

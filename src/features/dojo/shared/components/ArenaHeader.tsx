@@ -2,16 +2,17 @@ import type { ReactNode } from "react";
 import { Zap } from "lucide-react";
 import { NinjaArena } from "./NinjaArena";
 
-export type ArenaMobileSize = "default" | "short" | "battle";
+export type ArenaMobileSize = "default" | "short" | "minimal";
 
 interface ArenaHeaderProps {
   /** Em treino o cabeçalho encolhe e vira só a arena com o placar. */
   compact: boolean;
   /**
-   * Altura no celular (abaixo do `sm`). A partir do `sm`, `short` e `battle` usam o espaço do compacto.
+   * Altura no celular (abaixo do `sm`). A partir do `sm`, `short` e `minimal` usam o espaço do compacto.
    * - `default`: o mesmo das telas maiores.
    * - `short`: faixa dos ninjas baixa, para as configurações do lobby aparecerem logo.
-   * - `battle`: faixa ainda mais baixa e sem o placar, para o kana e o campo caberem acima do teclado.
+   * - `minimal`: faixa ainda mais baixa e sem o placar (a batalha, com o kana e o campo acima do
+   *   teclado; o ranking, que já mostra troféus e nível logo abaixo).
    */
   mobileSize?: ArenaMobileSize;
   /** Barra do topo da casca de atividade (voltar ao Dojô, título, áudio). */
@@ -28,7 +29,7 @@ interface ArenaHeaderProps {
 
 function spacingFor(compact: boolean, mobileSize: ArenaMobileSize) {
   // Ninjas a 2× ocupam uns 60px de pé: 4,5rem ainda mostra o corpo inteiro abaixo da barra.
-  if (mobileSize === "battle") return { container: "pb-[4.5rem] pt-3 sm:pb-32 sm:pt-5 lg:pb-44", bar: "sm:mb-4", aside: "hidden sm:flex" };
+  if (mobileSize === "minimal") return { container: "pb-[4.5rem] pt-3 sm:pb-32 sm:pt-5 lg:pb-44", bar: "sm:mb-4", aside: "hidden sm:flex" };
   if (mobileSize === "short") return { container: "pb-20 pt-3 sm:pb-32 sm:pt-5 lg:pb-44", bar: "mb-3 sm:mb-4", aside: "flex" };
   if (compact) return { container: "pb-32 pt-5 lg:pb-44", bar: "mb-4", aside: "flex" };
   return { container: "pb-36 pt-8 md:pb-40 md:pt-12 lg:pb-52", bar: "mb-6 md:mb-8", aside: "flex" };

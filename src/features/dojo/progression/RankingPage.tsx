@@ -167,6 +167,21 @@ function Leaderboard() {
 
 /* ---------- Você ---------- */
 
+/** Placa pequena das partidas (a `StatTile` do cabeçalho é alta demais para três lado a lado aqui). */
+function MatchTile({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="min-w-0 rounded-xl border-2 border-white/15 bg-black/30 px-2.5 py-1.5">
+      <p className="truncate text-[11px] font-black uppercase tracking-[0.06em] text-white/75">{label}</p>
+      <p className="font-display text-lg font-black leading-tight text-white">{value.toLocaleString("pt-BR")}</p>
+    </div>
+  );
+}
+
+/**
+ * Sua liga. No celular ela era a tela inteira (brasão grande, placas altas e quatro linhas de números)
+ * e empurrava a classificação para longe: agora o brasão encolhe, as placas são baixas e os números
+ * viram uma linha corrida.
+ */
 function YouCard() {
   const titleId = useId();
   const { standing, totals, level, meta, pendingCount, syncStatus } = useProgression();
@@ -176,11 +191,11 @@ function YouCard() {
   return (
     <section
       aria-labelledby={titleId}
-      className="relative isolate overflow-hidden rounded-[2rem] border-2 border-[hsl(var(--journey-wood-deep))] bg-journey-forest-deep p-5 text-white shadow-[0_8px_0_hsl(var(--journey-wood-deep)/.35)] sm:p-6"
+      className="relative isolate overflow-hidden rounded-[1.75rem] border-2 border-[hsl(var(--journey-wood-deep))] bg-journey-forest-deep p-4 text-white shadow-[0_6px_0_hsl(var(--journey-wood-deep)/.35)] sm:rounded-[2rem] sm:p-6 sm:shadow-[0_8px_0_hsl(var(--journey-wood-deep)/.35)]"
     >
       <div aria-hidden="true" className="journey-leaf-pattern absolute inset-0 -z-10 opacity-15" />
-      <div className="flex items-center gap-4">
-        <LeagueEmblem standing={standing} size="lg" />
+      <div className="flex items-center gap-3 sm:gap-4">
+        <LeagueEmblem standing={standing} size="lg" className="h-[63px] w-14 sm:h-[99px] sm:w-[88px]" />
         <div className="min-w-0">
           <p className="text-[11px] font-black uppercase tracking-[0.14em] text-journey-gold">
             Sua liga ·{" "}
@@ -188,16 +203,16 @@ function YouCard() {
               {standing.league.jp}
             </span>
           </p>
-          <h2 id={titleId} className="mt-1 font-display text-3xl font-black leading-none tracking-[-0.03em]">
+          <h2 id={titleId} className="mt-1 font-display text-2xl font-black leading-none tracking-[-0.03em] sm:text-3xl">
             {standing.label}
           </h2>
-          <p className="mt-2 flex items-center gap-1.5 text-sm font-black text-journey-gold">
+          <p className="mt-1.5 flex items-center gap-1.5 text-sm font-black text-journey-gold sm:mt-2">
             <Trophy size={16} strokeWidth={2.6} aria-hidden="true" /> {trophiesText(totals.trophies)}
           </p>
         </div>
       </div>
 
-      <div className="mt-5 space-y-3">
+      <div className="mt-4 space-y-2.5 sm:mt-5 sm:space-y-3">
         <div>
           <p className="mb-1.5 text-xs font-bold text-white/85">
             {standing.nextLabel ? `Faltam ${trophiesText(missing)} para ${standing.nextLabel}` : "Você está no topo da escada"}
@@ -217,23 +232,31 @@ function YouCard() {
         </div>
       </div>
 
-      <div role="group" aria-label="Suas partidas" className="mt-5 grid grid-cols-3 gap-2">
-        <StatTile label="Vitórias" value={String(totals.wins)} />
-        <StatTile label="Empates" value={String(totals.draws)} />
-        <StatTile label="Derrotas" value={String(totals.losses)} />
+      <div role="group" aria-label="Suas partidas" className="mt-4 grid grid-cols-3 gap-2 sm:mt-5">
+        <MatchTile label="Vitórias" value={totals.wins} />
+        <MatchTile label="Empates" value={totals.draws} />
+        <MatchTile label="Derrotas" value={totals.losses} />
       </div>
-      <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-1 text-xs font-semibold text-white/85">
-        <dt>Meta para vencer agora</dt>
-        <dd className="text-right font-black text-white">{meta}%</dd>
-        <dt>Recorde de troféus</dt>
-        <dd className="text-right font-black text-white">{totals.bestTrophies.toLocaleString("pt-BR")}</dd>
-        <dt>XP total</dt>
-        <dd className="text-right font-black text-white">{totals.xp.toLocaleString("pt-BR")}</dd>
-        <dt>Partidas ranqueadas</dt>
-        <dd className="text-right font-black text-white">{matches}</dd>
+      <dl className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs font-semibold text-white/85">
+        <div className="flex gap-1">
+          <dt>Meta para vencer agora:</dt>
+          <dd className="font-black text-white">{meta}%</dd>
+        </div>
+        <div className="flex gap-1">
+          <dt>Recorde:</dt>
+          <dd className="font-black text-white">{trophiesText(totals.bestTrophies)}</dd>
+        </div>
+        <div className="flex gap-1">
+          <dt>XP total:</dt>
+          <dd className="font-black text-white">{totals.xp.toLocaleString("pt-BR")}</dd>
+        </div>
+        <div className="flex gap-1">
+          <dt>Partidas ranqueadas:</dt>
+          <dd className="font-black text-white">{matches.toLocaleString("pt-BR")}</dd>
+        </div>
       </dl>
       {pendingCount > 0 && syncStatus !== "syncing" && (
-        <p className="mt-4 rounded-xl bg-black/30 px-3 py-2 text-xs font-semibold text-white/90">
+        <p className="mt-3 rounded-xl bg-black/30 px-3 py-2 text-xs font-semibold text-white/90">
           {pendingCount === 1 ? "1 resultado esperando" : `${pendingCount} resultados esperando`} para ir ao servidor.
         </p>
       )}
@@ -383,6 +406,9 @@ export default function RankingPage() {
       audioEnabled={audio.enabled}
       onToggleAudio={audio.toggle}
       eyebrow="Ligas, troféus e nível"
+      // No celular os troféus e o nível já estão no cartão da liga logo abaixo: o cabeçalho fica só
+      // com a barra e uma faixa baixa de ninjas, e a classificação aparece na primeira tela.
+      mobileHeader="minimal"
       stats={
         <div role="group" aria-label="Resumo" className="grid grid-cols-2 gap-2">
           <StatTile label="Troféus" value={totals.trophies.toLocaleString("pt-BR")} />
@@ -390,12 +416,12 @@ export default function RankingPage() {
         </div>
       }
     >
-      <main className="relative mx-auto grid max-w-6xl gap-6 px-5 pt-8 sm:px-8 lg:grid-cols-2 lg:px-12">
-        <div className="space-y-6">
+      <main className="relative mx-auto grid max-w-6xl gap-5 px-5 pt-5 sm:gap-6 sm:px-8 sm:pt-8 lg:grid-cols-2 lg:px-12">
+        <div className="space-y-5 sm:space-y-6">
           <YouCard />
           <Leaderboard />
         </div>
-        <div className="space-y-6">
+        <div className="space-y-5 sm:space-y-6">
           <Ladder />
           <Rules />
           <History />

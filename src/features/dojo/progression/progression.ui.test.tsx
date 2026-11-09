@@ -130,9 +130,13 @@ describe("página do ranking", () => {
     renderPage();
 
     expect(screen.getByRole("heading", { level: 1, name: /Ranking/ })).toBeInTheDocument();
+    // No celular o cabeçalho fica baixo e sem o placar (troféus e nível já estão no cartão da liga).
+    expect(screen.getByRole("group", { name: "Resumo" }).parentElement).toHaveClass("hidden", "sm:flex");
     expect(screen.getByText(/O ranking online não está ligado neste app/)).toBeInTheDocument();
     expect(screen.getByRole("region", { name: "Bronze III" })).toHaveTextContent("30 troféus");
     expect(within(screen.getByRole("group", { name: "Suas partidas" })).getByText("Vitórias").nextSibling).toHaveTextContent("1");
+    expect(screen.getByRole("region", { name: "Bronze III" })).toHaveTextContent(/Meta para vencer agora:\d+%/);
+    expect(screen.getByRole("region", { name: "Bronze III" })).toHaveTextContent("Partidas ranqueadas:1");
 
     const ladder = within(screen.getByRole("list", { name: "Ligas, da mais alta para a primeira" })).getAllByRole("listitem");
     const names = ["Lendário", "Titã", "Imortal", "Diamante", "Platina", "Ouro", "Prata", "Bronze"];
